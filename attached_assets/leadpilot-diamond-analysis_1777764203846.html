@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LeadPilot 2.0 Diamond Analysis</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm 16mm;
+  }
+
+  @media print {
+    body { background: #0e0d0d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .cover-page { page-break-after: always; }
+    .section-block { page-break-inside: avoid; }
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    background: #0e0d0d;
+    color: #e2e2df;
+    line-height: 1.6;
+    font-size: 11pt;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── COVER PAGE ── */
+  .cover-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: #0e0d0d;
+    position: relative;
+    overflow: hidden;
+    padding: 60px 40px;
+  }
+
+  .cover-page::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(114,86,201,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .cover-page::after {
+    content: '';
+    position: absolute;
+    bottom: -80px;
+    left: -80px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(76,194,135,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .cover-badge {
+    display: inline-block;
+    background: rgba(114,86,201,0.15);
+    border: 1px solid #7256c9;
+    color: #7256c9;
+    padding: 6px 20px;
+    border-radius: 20px;
+    font-size: 10pt;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+
+  .cover-title {
+    font-size: 38pt;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+    color: #e2e2df;
+    margin-bottom: 16px;
+  }
+
+  .cover-title .accent { color: #7256c9; }
+  .cover-title .green { color: #4cc287; }
+
+  .cover-subtitle {
+    font-size: 14pt;
+    color: #9a9892;
+    font-weight: 400;
+    margin-bottom: 48px;
+    max-width: 520px;
+  }
+
+  .cover-meta {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    color: #9a9892;
+    font-size: 9.5pt;
+  }
+
+  .cover-meta span { display: flex; align-items: center; gap: 6px; }
+
+  .cover-line {
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, #7256c9, #4cc287);
+    border-radius: 2px;
+    margin: 32px auto;
+  }
+
+  .cover-diamond {
+    font-size: 28pt;
+    margin-bottom: 20px;
+    opacity: 0.6;
+  }
+
+  /* ── GENERAL LAYOUT ── */
+  .content-wrapper {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  /* ── SECTION HEADERS ── */
+  .section-header {
+    margin-top: 36px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #6a6042;
+    page-break-after: avoid;
+  }
+
+  .section-number {
+    display: inline-block;
+    background: #7256c9;
+    color: #fff;
+    font-size: 9pt;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin-right: 10px;
+    letter-spacing: 1px;
+    vertical-align: middle;
+  }
+
+  .section-title {
+    font-size: 18pt;
+    font-weight: 700;
+    color: #e2e2df;
+    display: inline;
+    vertical-align: middle;
+  }
+
+  .subsection-header {
+    margin-top: 24px;
+    margin-bottom: 14px;
+    page-break-after: avoid;
+  }
+
+  .subsection-title {
+    font-size: 13pt;
+    font-weight: 600;
+    color: #c9b57b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .subsection-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background: #7256c9;
+    border-radius: 2px;
+  }
+
+  /* ── CARD CONTAINERS ── */
+  .card {
+    background: #272521;
+    border: 1px solid #6a6042;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+
+  .card-accent {
+    border-left: 4px solid #7256c9;
+  }
+
+  .card-green {
+    border-left: 4px solid #4cc287;
+  }
+
+  .card-gold {
+    border-left: 4px solid #c9b57b;
+  }
+
+  .card-title {
+    font-size: 12pt;
+    font-weight: 600;
+    color: #c9b57b;
+    margin-bottom: 8px;
+  }
+
+  /* ── KEY FINDINGS BOX ── */
+  .key-findings {
+    background: #272521;
+    border: 1px solid #6a6042;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+
+  .key-findings-title {
+    font-size: 12pt;
+    font-weight: 700;
+    color: #4cc287;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .finding-item {
+    padding: 8px 0;
+    padding-left: 20px;
+    position: relative;
+    color: #e2e2df;
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+
+  .finding-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    width: 8px;
+    height: 8px;
+    background: #7256c9;
+    border-radius: 50%;
+  }
+
+  .finding-item + .finding-item {
+    border-top: 1px solid rgba(106,96,66,0.4);
+  }
+
+  .finding-item strong { color: #c9b57b; }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 9.5pt;
+  }
+
+  thead th {
+    background: #544c37;
+    color: #e2e2df;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 9.5pt;
+    border-bottom: 2px solid #6a6042;
+  }
+
+  tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(106,96,66,0.3);
+    color: #e2e2df;
+    vertical-align: top;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #191816;
+  }
+
+  tbody tr:nth-child(odd) {
+    background: #1e1d1b;
+  }
+
+  .tag-p0 {
+    display: inline-block;
+    background: rgba(220,50,50,0.2);
+    color: #f87171;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 8.5pt;
+    font-weight: 600;
+  }
+
+  .tag-p1 {
+    display: inline-block;
+    background: rgba(234,179,8,0.2);
+    color: #facc15;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 8.5pt;
+    font-weight: 600;
+  }
+
+  .tag-p2 {
+    display: inline-block;
+    background: rgba(59,130,246,0.2);
+    color: #60a5fa;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 8.5pt;
+    font-weight: 600;
+  }
+
+  .tag-yes {
+    display: inline-block;
+    background: rgba(76,194,135,0.2);
+    color: #4cc287;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 8.5pt;
+    font-weight: 700;
+  }
+
+  .tag-unique {
+    display: inline-block;
+    background: rgba(114,86,201,0.25);
+    color: #a78bfa;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 8.5pt;
+    font-weight: 700;
+  }
+
+  .tag-no {
+    display: inline-block;
+    background: rgba(156,152,142,0.15);
+    color: #9a9892;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 8.5pt;
+  }
+
+  .tag-partial {
+    display: inline-block;
+    background: rgba(234,179,8,0.15);
+    color: #d4a72c;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 8.5pt;
+  }
+
+  /* ── PARAGRAPHS ── */
+  p {
+    margin-bottom: 10px;
+    color: #e2e2df;
+    font-size: 10.5pt;
+    line-height: 1.6;
+  }
+
+  p.muted { color: #9a9892; font-size: 10pt; }
+
+  /* ── LISTS ── */
+  .styled-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+  }
+
+  .styled-list li {
+    padding: 6px 0 6px 22px;
+    position: relative;
+    color: #e2e2df;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+
+  .styled-list li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 13px;
+    width: 6px;
+    height: 6px;
+    background: #4cc287;
+    border-radius: 50%;
+  }
+
+  .numbered-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+    counter-reset: numlist;
+  }
+
+  .numbered-list li {
+    padding: 6px 0 6px 30px;
+    position: relative;
+    color: #e2e2df;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    counter-increment: numlist;
+  }
+
+  .numbered-list li::before {
+    content: counter(numlist);
+    position: absolute;
+    left: 0;
+    top: 5px;
+    width: 20px;
+    height: 20px;
+    background: rgba(114,86,201,0.2);
+    color: #7256c9;
+    border-radius: 50%;
+    font-size: 9pt;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── DIVIDERS ── */
+  .divider {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #6a6042, transparent);
+    margin: 28px 0;
+  }
+
+  /* ── HIGHLIGHT BOX ── */
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(114,86,201,0.08), rgba(76,194,135,0.06));
+    border: 1px solid rgba(114,86,201,0.3);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 18px 0;
+  }
+
+  .highlight-box .highlight-title {
+    color: #7256c9;
+    font-weight: 700;
+    font-size: 11pt;
+    margin-bottom: 8px;
+  }
+
+  .highlight-box p { font-size: 10.5pt; }
+
+  /* ── PRICING CARD ── */
+  .pricing-highlight {
+    background: linear-gradient(135deg, rgba(114,86,201,0.12), rgba(76,194,135,0.08));
+    border: 1px solid #7256c9;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 18px 0;
+    text-align: center;
+  }
+
+  .pricing-highlight .price {
+    font-size: 32pt;
+    font-weight: 700;
+    color: #4cc287;
+  }
+
+  .pricing-highlight .price-label {
+    font-size: 10pt;
+    color: #9a9892;
+    margin-top: 4px;
+  }
+
+  /* ── DIAMOND CARD ── */
+  .diamond-card {
+    background: #272521;
+    border: 1px solid #6a6042;
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 14px 0;
+    position: relative;
+  }
+
+  .diamond-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #7256c9, #4cc287);
+    border-radius: 8px 8px 0 0;
+  }
+
+  .diamond-number {
+    display: inline-block;
+    background: rgba(114,86,201,0.2);
+    color: #7256c9;
+    font-size: 9pt;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 12px;
+    margin-bottom: 6px;
+  }
+
+  .diamond-title {
+    font-size: 12pt;
+    font-weight: 700;
+    color: #c9b57b;
+    margin-bottom: 8px;
+  }
+
+  .diamond-desc {
+    color: #e2e2df;
+    font-size: 10pt;
+    line-height: 1.55;
+    margin-bottom: 8px;
+  }
+
+  .diamond-list {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0;
+  }
+
+  .diamond-list li {
+    padding: 3px 0 3px 18px;
+    position: relative;
+    color: #e2e2df;
+    font-size: 9.5pt;
+    line-height: 1.45;
+  }
+
+  .diamond-list li::before {
+    content: '\25C6';
+    position: absolute;
+    left: 0;
+    color: #4cc287;
+    font-size: 7pt;
+    top: 5px;
+  }
+
+  /* ── PHASE TIMELINE ── */
+  .phase-card {
+    background: #272521;
+    border-left: 4px solid #7256c9;
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 12px 0;
+  }
+
+  .phase-card h4 {
+    color: #c9b57b;
+    font-size: 11pt;
+    margin-bottom: 6px;
+  }
+
+  .phase-card .phase-time {
+    color: #7256c9;
+    font-size: 9pt;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  /* ── PRIORITY BADGE ── */
+  .priority-badge {
+    display: inline-block;
+    background: rgba(76,194,135,0.15);
+    color: #4cc287;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 8.5pt;
+    font-weight: 600;
+  }
+
+  /* ── STAT ROW ── */
+  .stat-row {
+    display: flex;
+    gap: 16px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+
+  .stat-box {
+    flex: 1;
+    min-width: 120px;
+    background: #272521;
+    border: 1px solid #6a6042;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 22pt;
+    font-weight: 700;
+    color: #4cc287;
+    line-height: 1.1;
+  }
+
+  .stat-label {
+    font-size: 8.5pt;
+    color: #9a9892;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── FINAL POSITIONING ── */
+  .positioning-box {
+    background: linear-gradient(135deg, rgba(114,86,201,0.1), rgba(76,194,135,0.06));
+    border: 2px solid #7256c9;
+    border-radius: 10px;
+    padding: 24px;
+    margin: 20px 0;
+    text-align: center;
+  }
+
+  .positioning-quote {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #e2e2df;
+    margin-bottom: 16px;
+  }
+
+  .positioning-bullets {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .positioning-bullets li {
+    padding: 6px 0 6px 24px;
+    position: relative;
+    font-size: 10.5pt;
+    color: #e2e2df;
+  }
+
+  .positioning-bullets li strong { color: #c9b57b; }
+
+  .positioning-bullets li::before {
+    content: '\25C6';
+    position: absolute;
+    left: 4px;
+    color: #7256c9;
+    font-size: 8pt;
+    top: 8px;
+  }
+
+  /* ── NOT TO BUILD ── */
+  .no-build-list li::before {
+    content: '\2717';
+    color: #f87171 !important;
+    font-size: 10pt;
+    left: 2px;
+    top: 5px;
+    width: auto;
+    height: auto;
+    background: none;
+  }
+
+  /* ── SPACING ── */
+  .mb-sm { margin-bottom: 8px; }
+  .mb-md { margin-bottom: 16px; }
+  .mb-lg { margin-bottom: 24px; }
+  .mt-md { margin-top: 16px; }
+  .mt-lg { margin-top: 24px; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- COVER PAGE                                  -->
+<!-- ════════════════════════════════════════════ -->
+<div class="cover-page">
+  <div class="cover-badge">Strategic Analysis</div>
+  <div class="cover-diamond">&#9670;</div>
+  <h1 class="cover-title">
+    <span class="accent">LeadPilot 2.0</span><br>Diamond Analysis
+  </h1>
+  <div class="cover-line"></div>
+  <p class="cover-subtitle">
+    Comprehensive gap analysis, competitive positioning, and 10x feature roadmap for the next-generation B2B prospecting platform
+  </p>
+  <div class="cover-meta">
+    <span>Version 2.0</span>
+    <span>March 2026</span>
+    <span>Confidential</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- SECTION 1: EXECUTIVE SUMMARY                -->
+<!-- ════════════════════════════════════════════ -->
+<div class="content-wrapper">
+
+<div class="section-header">
+  <span class="section-number">01</span>
+  <h2 class="section-title">Executive Summary</h2>
+</div>
+
+<p>
+  LeadPilot 2.0 is a B2B prospecting platform that converts job postings into enriched, pitched, autonomously-replied-to opportunities powered by intent signals. The competitive moat combines 30+ job board scrapers, an intent signal layer (funding, job changes, hiring spikes), an agentic AI SDR loop, and waterfall enrichment with BYOK &mdash; all at <strong style="color:#4cc287;">1/5 the price</strong> of competitors like Apollo + Clay + Smartlead combined.
+</p>
+
+<div class="stat-row">
+  <div class="stat-box">
+    <div class="stat-value">30+</div>
+    <div class="stat-label">Job Board Scrapers</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value">90%</div>
+    <div class="stat-label">BYOK Cost Savings</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value">1/5</div>
+    <div class="stat-label">Competitor Price</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-value">0</div>
+    <div class="stat-label">Competitors Using Jobs as Intent</div>
+  </div>
+</div>
+
+<div class="key-findings">
+  <div class="key-findings-title">&#9733; Key Findings</div>
+  <div class="finding-item">
+    The <strong>"find clients.txt" and "find clients2.txt"</strong> represent a strategic debate: Company-First vs Job-First architecture. The <strong>CORRECT approach is Job-First with Company Enrichment</strong> (jobs are the opportunities, companies are the enrichment layer)
+  </div>
+  <div class="finding-item">
+    The <strong>Upwork Scrapper</strong> is a sophisticated Chrome Extension (V2 is production-ready) that should become a premium feature
+  </div>
+  <div class="finding-item">
+    The <strong>Starter Pack</strong> contains battle-tested v1 code that saves 4-6 weeks of development
+  </div>
+  <div class="finding-item">
+    <strong>No competitor currently uses job postings as primary intent signals</strong> &mdash; this is a <span style="color:#4cc287; font-weight:700;">MASSIVE market gap</span>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════ -->
+<!-- SECTION 2: COMPREHENSIVE GAP ANALYSIS       -->
+<!-- ════════════════════════════════════════════ -->
+
+<div class="section-header">
+  <span class="section-number">02</span>
+  <h2 class="section-title">Comprehensive Gap Analysis</h2>
+</div>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">Architecture Gaps</h3>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:22%">Gap</th>
+      <th style="width:28%">Current State</th>
+      <th style="width:28%">Impact</th>
+      <th style="width:22%">Fix Priority</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>No message queue/event bus</td>
+      <td>All processing synchronous</td>
+      <td>Single enrichment blocks HTTP request for 10-60s</td>
+      <td><span class="tag-p0">P0</span> Add BullMQ + Redis</td>
+    </tr>
+    <tr>
+      <td>Singleton pattern everywhere</td>
+      <td>Mutable state, not thread-safe</td>
+      <td>Impossible to test in isolation</td>
+      <td><span class="tag-p1">P1</span> Dependency injection</td>
+    </tr>
+    <tr>
+      <td>No caching layer</td>
+      <td>Domain/AI/enrichment never cached</td>
+      <td>Same company enriched dozens of times</td>
+      <td><span class="tag-p0">P0</span> Add Redis cache</td>
+    </tr>
+    <tr>
+      <td>No system-level deduplication</td>
+      <td>Same jobs from multiple platforms</td>
+      <td>Wasted credits, duplicate contacts</td>
+      <td><span class="tag-p0">P0</span> Dedup on externalId + platform</td>
+    </tr>
+    <tr>
+      <td>Credit tracking unreliable</td>
+      <td>Per-instance counter, resets on restart</td>
+      <td>Billing disputes, revenue loss</td>
+      <td><span class="tag-p0">P0</span> Persist to usage_log</td>
+    </tr>
+    <tr>
+      <td>Error handling inconsistent</td>
+      <td>Some throw, some return objects, some catch silently</td>
+      <td>Silent failures, hard to debug</td>
+      <td><span class="tag-p1">P1</span> Unified error types</td>
+    </tr>
+    <tr>
+      <td>Duplicated logic across modules</td>
+      <td>stripHtml, isJobBoard lists, domain inference in 5+ files</td>
+      <td>Maintenance burden, inconsistency</td>
+      <td><span class="tag-p1">P1</span> Shared utils library</td>
+    </tr>
+    <tr>
+      <td>No type safety for API responses</td>
+      <td>All typed as <code>any</code></td>
+      <td>Runtime crashes from unexpected data</td>
+      <td><span class="tag-p1">P1</span> Zod schemas</td>
+    </tr>
+    <tr>
+      <td>No rate limiting awareness</td>
+      <td>No API quota tracking</td>
+      <td>Exhausted credits, service bans</td>
+      <td><span class="tag-p2">P2</span> Rate limit middleware</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">Domain Resolution Gaps</h3>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:25%">Gap</th>
+      <th style="width:40%">Detail</th>
+      <th style="width:35%">Fix</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Only tries .com</td>
+      <td><code>inferFromCompanyName</code> never attempts .io, .co, .ai</td>
+      <td>Add TLD expansion: [.com, .io, .co, .ai, .dev, .tech]</td>
+    </tr>
+    <tr>
+      <td>Snippet position arbitrary</td>
+      <td>Uses words[20:40] &mdash; may skip most distinctive part</td>
+      <td>Use TF-IDF to find most unique phrase</td>
+    </tr>
+    <tr>
+      <td>No caching</td>
+      <td>Same company resolved multiple times</td>
+      <td>Redis cache with 30-day TTL</td>
+    </tr>
+    <tr>
+      <td>Duplicate API calls</td>
+      <td><code>resolveViaDescriptionSearch</code> and <code>resolveViaSnippet</code> both search</td>
+      <td>Combine into single Serper call</td>
+    </tr>
+    <tr>
+      <td>Confidence ordering questionable</td>
+      <td>Description search (85) &gt; company search (80)</td>
+      <td>Flip: company name search more reliable</td>
+    </tr>
+    <tr>
+      <td>Blacklist inconsistency</td>
+      <td>3 different isJobBoard lists across files</td>
+      <td>Single shared blacklist module</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">Enrichment Waterfall Gaps</h3>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:25%">Gap</th>
+      <th style="width:40%">Detail</th>
+      <th style="width:35%">Fix</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>&lt;2 email threshold triggers ALL fallbacks</td>
+      <td>Even with 1 good email, runs Prospeo + RocketReach</td>
+      <td>Change to: skip if 1+ verified email exists</td>
+    </tr>
+    <tr>
+      <td>No parallel execution</td>
+      <td>All steps sequential</td>
+      <td>Run A-Leads + website scraping in parallel</td>
+    </tr>
+    <tr>
+      <td>A-Leads <code>domainsMatch</code> too loose</td>
+      <td>company.com matches company.co</td>
+      <td>Require full domain match, not just base</td>
+    </tr>
+    <tr>
+      <td><code>rawResultMatchesTarget</code> accepts empty info</td>
+      <td>Contacts with no data always accepted</td>
+      <td>Require at least name OR email to accept</td>
+    </tr>
+    <tr>
+      <td>No BYOK in v1 orchestrator</td>
+      <td>Hardcoded A-Leads as primary</td>
+      <td>Read from waterfallConfigs table</td>
+    </tr>
+    <tr>
+      <td>Website scraper stops at 5 contacts</td>
+      <td>May miss key decision makers</td>
+      <td>Increase to 15, parallelize page scraping</td>
+    </tr>
+    <tr>
+      <td>Enrichment cost not shown to user</td>
+      <td>Credits deducted silently</td>
+      <td>Real-time credit counter in UI</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">AI Prompts Gaps</h3>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:25%">Gap</th>
+      <th style="width:40%">Detail</th>
+      <th style="width:35%">Fix</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>No email length validation</td>
+      <td>120-word limit only in prompt</td>
+      <td>Enforce in code: truncate body if &gt;120 words</td>
+    </tr>
+    <tr>
+      <td>Budget estimation assumes 160hrs/month</td>
+      <td>Project jobs have different allocations</td>
+      <td>Add budget_type field for hourly vs fixed</td>
+    </tr>
+    <tr>
+      <td>No caching on AI classification</td>
+      <td>Same job classified twice wastes API calls</td>
+      <td>Cache by job title + description hash</td>
+    </tr>
+    <tr>
+      <td>Tech tier first-match only</td>
+      <td>"React for Salesforce" = "high" (Salesforce wins)</td>
+      <td>Score all matching tiers, use weighted average</td>
+    </tr>
+    <tr>
+      <td>No A/B testing for emails</td>
+      <td>Single variant per job</td>
+      <td>Generate 2 variants, track open rates</td>
+    </tr>
+    <tr>
+      <td>Follow-up doesn't reference original body</td>
+      <td>Only subject line</td>
+      <td>Include original body in follow-up prompt</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">Upwork Scrapper Gaps</h3>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:25%">Gap</th>
+      <th style="width:40%">Detail</th>
+      <th style="width:35%">Fix</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>4 overlapping codebases</td>
+      <td>server.js, capture.js, Ext v1, Ext v2</td>
+      <td>Consolidate to V2 extension only</td>
+    </tr>
+    <tr>
+      <td>No normalized schema</td>
+      <td>4 different data models</td>
+      <td>Define canonical LeadPilot Job model</td>
+    </tr>
+    <tr>
+      <td>Company name often null</td>
+      <td>Upwork hides company identity</td>
+      <td>clientCompanyMetadata GQL is most reliable</td>
+    </tr>
+    <tr>
+      <td>No deduplication across runs</td>
+      <td>In-memory Map lost on restart</td>
+      <td>Centralized job store with jobCiphertext dedup</td>
+    </tr>
+    <tr>
+      <td>No lead scoring</td>
+      <td>Data collected but not scored</td>
+      <td>Score by totalSpent, paymentVerified, enterprise</td>
+    </tr>
+    <tr>
+      <td>Security: exposed Supabase key</td>
+      <td>.env.example has real-looking credentials</td>
+      <td>Rotate keys, use env vars only</td>
+    </tr>
+    <tr>
+      <td>No rate limiting</td>
+      <td>API endpoints unprotected</td>
+      <td>Add rate limit middleware</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════ -->
+<!-- SECTION 3: COMPETITIVE ANALYSIS             -->
+<!-- ════════════════════════════════════════════ -->
+
+<div class="section-header">
+  <span class="section-number">03</span>
+  <h2 class="section-title">Competitive Analysis &mdash; The Diamond Map</h2>
+</div>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">Feature Comparison Matrix</h3>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:20%">Capability</th>
+      <th style="width:9%">Apollo</th>
+      <th style="width:9%">Clay</th>
+      <th style="width:9%">Smartlead</th>
+      <th style="width:9%">Artisan</th>
+      <th style="width:9%">Instantly</th>
+      <th style="width:9%">ZoomInfo</th>
+      <th style="width:9%">Hunter</th>
+      <th style="width:17%">LeadPilot 2.0</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Job posting intent signals</strong></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-unique">YES (UNIQUE)</span></td>
+    </tr>
+    <tr>
+      <td>Waterfall enrichment</td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+    </tr>
+    <tr>
+      <td>AI SDR agent</td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-partial">Partial</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+    </tr>
+    <tr>
+      <td>Cold email sending</td>
+      <td><span class="tag-yes">Yes</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+      <td><span class="tag-partial">Partial</span></td>
+      <td><span class="tag-partial">Partial</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+    </tr>
+    <tr>
+      <td>Intent data (web-based)</td>
+      <td><span class="tag-yes">Yes</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-partial">Partial</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+    </tr>
+    <tr>
+      <td>Unified platform</td>
+      <td><span class="tag-yes">Yes</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-partial">Partial</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+    </tr>
+    <tr>
+      <td>SMB-accessible pricing</td>
+      <td><span class="tag-yes">Yes</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+      <td><span class="tag-yes">Yes</span></td>
+    </tr>
+    <tr>
+      <td>Transparent AI decisions</td>
+      <td><span class="tag-no">No</span></td>
+      <td>N/A</td>
+      <td>N/A</td>
+      <td><span class="tag-no">No</span></td>
+      <td>N/A</td>
+      <td>N/A</td>
+      <td>N/A</td>
+      <td><span class="tag-yes">Yes</span></td>
+    </tr>
+    <tr>
+      <td>BYOK enrichment</td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-no">No</span></td>
+      <td><span class="tag-unique">YES (UNIQUE)</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">Pricing Comparison</h3>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:18%">Tool</th>
+      <th style="width:15%">Monthly Cost</th>
+      <th style="width:27%">What You Get</th>
+      <th style="width:40%">Real Cost (Full Stack)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Apollo Pro</td>
+      <td>$99/user</td>
+      <td>Database + sequences</td>
+      <td>$99/mo (no sending, weak enrichment)</td>
+    </tr>
+    <tr>
+      <td>Clay Starter</td>
+      <td>$149/mo</td>
+      <td>Enrichment only</td>
+      <td>$700+/mo (need Smartlead + Apollo)</td>
+    </tr>
+    <tr>
+      <td>Smartlead Pro</td>
+      <td>$94/mo</td>
+      <td>Sending only</td>
+      <td>$94/mo (no data, no enrichment)</td>
+    </tr>
+    <tr>
+      <td>Artisan</td>
+      <td>$2,000-5,000/mo</td>
+      <td>AI SDR only</td>
+      <td>$2K-5K/mo (black box, unproven)</td>
+    </tr>
+    <tr>
+      <td>ZoomInfo Advanced</td>
+      <td>$2,000+/mo</td>
+      <td>Intent data only</td>
+      <td>$24K+/yr (enterprise only)</td>
+    </tr>
+    <tr style="background: rgba(76,194,135,0.08) !important;">
+      <td><strong style="color:#4cc287;">LeadPilot Pro</strong></td>
+      <td><strong style="color:#4cc287;">$79/mo</strong></td>
+      <td><strong style="color:#4cc287;">ALL of the above</strong></td>
+      <td><strong style="color:#4cc287;">$79/mo (everything included)</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="highlight-box">
+  <div class="highlight-title">The Gap Nobody Owns: Job-Posting Intent = Buying Intent</div>
+  <p>
+    No major B2B prospecting platform currently uses job postings as a primary intent signal. This is the <strong>single biggest untapped opportunity</strong> in the market:
+  </p>
+  <ul class="styled-list mt-md">
+    <li>Company hiring VP of Sales = likely buying CRM/sales tools</li>
+    <li>Company hiring data engineers = likely buying data infrastructure</li>
+    <li>Company hiring DevOps = likely buying cloud/infra tools</li>
+  </ul>
+  <p class="mt-md" style="color:#4cc287; font-weight:600;">
+    Job posting signals are PUBLIC, SPECIFIC, and PREDICTIVE &mdash; unlike ZoomInfo's 52% false positive rate on web browsing signals
+  </p>
+</div>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════ -->
+<!-- SECTION 4: DIAMOND IDEAS                    -->
+<!-- ════════════════════════════════════════════ -->
+
+<div class="section-header">
+  <span class="section-number">04</span>
+  <h2 class="section-title">Diamond Ideas &mdash; 10x Features</h2>
+</div>
+
+<div class="diamond-card">
+  <span class="diamond-number">DIAMOND 1</span>
+  <div class="diamond-title">Upwork Scrapper as Premium Extension ($49/mo add-on)</div>
+  <div class="diamond-desc">
+    The Upwork Chrome Extension V2 is production-ready and provides data NO other platform can access:
+  </div>
+  <ul class="diamond-list">
+    <li>Client company name (via clientCompanyMetadata GQL)</li>
+    <li>Client spend history ($100K+ spent = high quality)</li>
+    <li>Payment verification status</li>
+    <li>Hire rate and active contracts</li>
+    <li>Enterprise client identification</li>
+  </ul>
+  <p class="muted" style="font-size:9pt; margin-top:8px;">Integration path: Premium users unlock the extension, data flows directly into LeadPilot via API</p>
+</div>
+
+<div class="diamond-card">
+  <span class="diamond-number">DIAMOND 2</span>
+  <div class="diamond-title">Signal-to-Meeting Pipeline (The Full Loop)</div>
+  <div class="diamond-desc">
+    No competitor offers: Signal detected &rarr; Auto-enrich &rarr; AI writes pitch &rarr; Send via Smartlead/Instantly &rarr; Monitor reply &rarr; Auto-follow-up &rarr; Book meeting via Calendly. This is the <strong>"Artisan killer"</strong> &mdash; same promise but transparent, auditable, and 1/10th the price.
+  </div>
+</div>
+
+<div class="diamond-card">
+  <span class="diamond-number">DIAMOND 3</span>
+  <div class="diamond-title">BYOK Cost Revolution</div>
+  <div class="diamond-desc">
+    BYOK (Bring Your Own Keys) at 0.1 credits vs 1.0 credit for managed = <strong style="color:#4cc287;">90% cost savings</strong>. Clay charges $149-720/mo for enrichment. LeadPilot with BYOK: effectively $8-25/mo. This makes LeadPilot the <strong>"Robinhood of B2B data"</strong> &mdash; democratizing access.
+  </div>
+</div>
+
+<div class="diamond-card">
+  <span class="diamond-number">DIAMOND 4</span>
+  <div class="diamond-title">Hiring Intent API</div>
+  <div class="diamond-desc">
+    Sell the intent signal data as an API. Other tools (CRM, sales engagement, marketing automation) need intent data. LeadPilot's hiring signals are uniquely specific and predictive. Revenue stream: API access at <strong>$0.10/signal lookup</strong>.
+  </div>
+</div>
+
+<div class="diamond-card">
+  <span class="diamond-number">DIAMOND 5</span>
+  <div class="diamond-title">Champion Tracker</div>
+  <div class="diamond-desc">
+    When a contact marked as "champion" changes companies, LeadPilot automatically:
+  </div>
+  <ol class="numbered-list">
+    <li>Detects the job change via LinkedIn monitoring</li>
+    <li>Creates a new company record for their new employer</li>
+    <li>Suggests a re-engagement campaign</li>
+    <li>AI generates a "congratulations on the new role" email</li>
+  </ol>
+  <p class="muted" style="font-size:9pt; margin-top:8px;">This is CRM + signal + outreach in one feature. No competitor does this.</p>
+</div>
+
+<div class="diamond-card">
+  <span class="diamond-number">DIAMOND 6</span>
+  <div class="diamond-title">Agency White-Label Mode (Post-Launch)</div>
+  <div class="diamond-desc">
+    Agencies pay $249/mo for Agency tier. Offer white-label at $499/mo where agencies can use their own branding, manage unlimited client workspaces, each with separate data, credits, and billing.
+  </div>
+  <p style="color:#4cc287; font-weight:600; margin-top:6px;">Margin: $250/mo per agency &times; 100 agencies = $25K MRR</p>
+</div>
+
+<div class="diamond-card">
+  <span class="diamond-number">DIAMOND 7</span>
+  <div class="diamond-title">Platform Job Marketplace</div>
+  <div class="diamond-desc">
+    Create a marketplace where freelancers can browse real-time job signals with enrichment, purchase verified contact bundles (5 credits = 1 verified contact), and AI-generate custom pitches per job.
+  </div>
+  <p class="muted" style="font-size:9pt; margin-top:8px;">Creates a marketplace flywheel: more users = more signal data = better enrichment = more users</p>
+</div>
+
+<div class="diamond-card">
+  <span class="diamond-number">DIAMOND 8</span>
+  <div class="diamond-title">Autonomous Competitor Monitoring</div>
+  <div class="diamond-desc">
+    When target companies post jobs that mention competitor products (e.g., "Salesforce admin needed"), LeadPilot flags this as a <strong>"competitive displacement opportunity"</strong> and generates a personalized pitch about why they should switch. This is signal + intelligence + outreach in one.
+  </div>
+</div>
+
+<div class="diamond-card">
+  <span class="diamond-number">DIAMOND 9</span>
+  <div class="diamond-title">Cross-Platform Identity Resolution</div>
+  <div class="diamond-desc">
+    When the same company posts jobs on Upwork, LinkedIn, and Indeed, LeadPilot merges these into a single company record with a unified <strong>"hiring intent score"</strong>. More signals = higher score = more actionable. This creates a data moat that no single-platform scraper can match.
+  </div>
+</div>
+
+<div class="diamond-card">
+  <span class="diamond-number">DIAMOND 10</span>
+  <div class="diamond-title">Community-Powered Enrichment</div>
+  <div class="diamond-desc">
+    Let users contribute verified contact data and earn credits. If User A verifies that john@company.com is valid, User B gets that verification for 0.1 credits instead of 1.0. This creates a <strong>Wikipedia-like network effect</strong> for B2B contact data, with built-in quality control through SMTP verification.
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════ -->
+<!-- SECTION 5: BETTER & EASIEST SOLUTIONS       -->
+<!-- ════════════════════════════════════════════ -->
+
+<div class="section-header">
+  <span class="section-number">05</span>
+  <h2 class="section-title">Better &amp; Easiest Solutions</h2>
+</div>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">Easiest Quick Wins (Week 1)</h3>
+</div>
+
+<ol class="numbered-list">
+  <li>Add Redis caching for domain resolution <span style="color:#4cc287;">(saves 70% of Serper API costs)</span></li>
+  <li>Consolidate isJobBoard lists into shared module <span style="color:#4cc287;">(prevents blacklist gaps)</span></li>
+  <li>Fix A-Leads search to never use job_title filter <span style="color:#4cc287;">(already fixed in starter pack)</span></li>
+  <li>Add .io/.co/.ai to domain inference <span style="color:#4cc287;">(catches 30% more tech company domains)</span></li>
+  <li>Parallelize website scraping pages <span style="color:#4cc287;">(3x faster enrichment)</span></li>
+</ol>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">Better Architecture Solutions</h3>
+</div>
+
+<ol class="numbered-list">
+  <li>Replace synchronous processing with BullMQ job queues <span class="priority-badge">10x throughput</span></li>
+  <li>Add Zod schema validation for all external API responses <span class="priority-badge">Prevents runtime crashes</span></li>
+  <li>Implement shared credit tracking with Redis <span class="priority-badge">Prevents billing disputes</span></li>
+  <li>Add rate limiting middleware per-provider <span class="priority-badge">Prevents API bans</span></li>
+  <li>Consolidate 4 Upwork scraper codebases into single V2 extension <span class="priority-badge">Maintainability</span></li>
+</ol>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">Easiest Monetization Path</h3>
+</div>
+
+<ol class="numbered-list">
+  <li>Start with Free tier (50 credits) + Pro ($79/mo) only</li>
+  <li>BYOK saves users 90% on enrichment = <strong>strongest value prop</strong></li>
+  <li>Upwork Extension as $49/mo add-on for Pro+ users</li>
+  <li>Intent Signal API as pay-per-use ($0.10/signal)</li>
+  <li>Skip Agency tier until 100+ Pro users</li>
+</ol>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════ -->
+<!-- SECTION 6: INTEGRATION ROADMAP              -->
+<!-- ════════════════════════════════════════════ -->
+
+<div class="section-header">
+  <span class="section-number">06</span>
+  <h2 class="section-title">Integration Roadmap &mdash; Upwork Scrapper &rarr; LeadPilot</h2>
+</div>
+
+<div class="phase-card">
+  <div class="phase-time">WEEK 1-2</div>
+  <h4>Phase 1: Chrome Extension Integration</h4>
+  <ul class="styled-list">
+    <li>Adopt V2 Chrome Extension as primary Upwork engine</li>
+    <li>Add LeadPilot API key auth to extension settings</li>
+    <li>Extension sends normalized payloads directly to LeadPilot API (replacing n8n webhook)</li>
+    <li>Map Upwork fields to canonical LeadPilot Job schema</li>
+    <li>Use organizationUid + companyId as dedup keys</li>
+  </ul>
+</div>
+
+<div class="phase-card">
+  <div class="phase-time">WEEK 3</div>
+  <h4>Phase 2: Premium Feature Gating</h4>
+  <ul class="styled-list">
+    <li>Upwork scraping requires Pro plan or higher</li>
+    <li>Extension checks LeadPilot subscription status on launch</li>
+    <li>Premium badge in extension UI</li>
+    <li>Usage tracked via LeadPilot credits (1 credit = 5 Upwork jobs scraped)</li>
+  </ul>
+</div>
+
+<div class="phase-card">
+  <div class="phase-time">WEEK 4</div>
+  <h4>Phase 3: Enhanced Enrichment</h4>
+  <ul class="styled-list">
+    <li>Use Upwork client data (totalSpent, paymentVerified, hireRate) for lead scoring</li>
+    <li>Enterprise clients flagged as high-priority signals</li>
+    <li>Client fingerprinting (SHA-256 hash) for cross-platform dedup</li>
+    <li>Agency staff enumeration for finding multiple decision makers</li>
+  </ul>
+</div>
+
+<div class="phase-card">
+  <div class="phase-time">WEEK 5-6</div>
+  <h4>Phase 4: Cross-Platform Intelligence</h4>
+  <ul class="styled-list">
+    <li>When same company found on Upwork + LinkedIn + Indeed, merge into single record</li>
+    <li>"Hiring intent score" increases with each new platform signal</li>
+    <li>Alert users when a tracked company posts on a new platform</li>
+  </ul>
+</div>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════ -->
+<!-- SECTION 7: REVISED PRICING STRATEGY         -->
+<!-- ════════════════════════════════════════════ -->
+
+<div class="section-header">
+  <span class="section-number">07</span>
+  <h2 class="section-title">Revised Pricing Strategy</h2>
+</div>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">Recommended Pricing</h3>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:12%">Tier</th>
+      <th style="width:13%">Price</th>
+      <th style="width:13%">Credits</th>
+      <th style="width:27%">Key Feature</th>
+      <th style="width:35%">Target</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Free</td>
+      <td>$0</td>
+      <td>50</td>
+      <td>Job search + classification</td>
+      <td>Solo freelancers</td>
+    </tr>
+    <tr style="background: rgba(76,194,135,0.08) !important;">
+      <td><strong style="color:#4cc287;">Pro</strong></td>
+      <td><strong style="color:#4cc287;">$79/mo</strong></td>
+      <td><strong style="color:#4cc287;">2,000</strong></td>
+      <td><strong style="color:#4cc287;">Enrichment + AI emails + signals</strong></td>
+      <td><strong style="color:#4cc287;">Consultants, small agencies</strong></td>
+    </tr>
+    <tr>
+      <td>Agency</td>
+      <td>$249/mo</td>
+      <td>10,000</td>
+      <td>Multi-workspace + Upwork Extension</td>
+      <td>Agencies, dev shops</td>
+    </tr>
+    <tr>
+      <td>Scale</td>
+      <td>Custom</td>
+      <td>50K+</td>
+      <td>API + white-label + dedicated support</td>
+      <td>Enterprise</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">Upwork Extension Pricing</h3>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:33%">Plan</th>
+      <th style="width:22%">Price</th>
+      <th style="width:45%">Included</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Pro+ included</td>
+      <td>$0 extra</td>
+      <td>50 jobs/day scrape limit</td>
+    </tr>
+    <tr>
+      <td>Agency+ included</td>
+      <td>$0 extra</td>
+      <td>Unlimited jobs/day</td>
+    </tr>
+    <tr>
+      <td>Standalone</td>
+      <td>$49/mo</td>
+      <td>Works independently, exports to CSV</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">Revenue Projections (Conservative)</h3>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:25%">Milestone</th>
+      <th style="width:15%">Users</th>
+      <th style="width:20%">MRR</th>
+      <th style="width:40%">Key Driver</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Month 3</td>
+      <td>100</td>
+      <td>$7,900</td>
+      <td>Pro early adopters</td>
+    </tr>
+    <tr>
+      <td>Month 6</td>
+      <td>500</td>
+      <td>$39,500</td>
+      <td>Agency tier + Upwork Extension</td>
+    </tr>
+    <tr>
+      <td>Month 12</td>
+      <td>2,000</td>
+      <td>$175,000</td>
+      <td>Intent Signal API + BYOK adoption</td>
+    </tr>
+    <tr style="background: rgba(114,86,201,0.08) !important;">
+      <td><strong style="color:#7256c9;">Month 18</strong></td>
+      <td><strong style="color:#7256c9;">5,000</strong></td>
+      <td><strong style="color:#7256c9;">$450,000</strong></td>
+      <td><strong style="color:#7256c9;">Marketplace + white-label</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════ -->
+<!-- SECTION 8: FINAL RECOMMENDATIONS            -->
+<!-- ════════════════════════════════════════════ -->
+
+<div class="section-header">
+  <span class="section-number">08</span>
+  <h2 class="section-title">Final Recommendations</h2>
+</div>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">Top 5 Priority Actions</h3>
+</div>
+
+<ol class="numbered-list">
+  <li><strong style="color:#c9b57b;">Build the Job-First architecture</strong> (NOT Company-First) &mdash; this is the core data model</li>
+  <li><strong style="color:#c9b57b;">Ship the Intent Signal Engine</strong> as the #1 differentiator &mdash; no competitor has this</li>
+  <li><strong style="color:#c9b57b;">Integrate Upwork V2 Extension</strong> as premium feature &mdash; immediate revenue opportunity</li>
+  <li><strong style="color:#c9b57b;">Launch with BYOK</strong> as the cost revolution message &mdash; "90% cheaper than Clay"</li>
+  <li><strong style="color:#c9b57b;">Build the Agentic AI SDR</strong> with full transparency &mdash; "see every decision" vs Artisan's black box</li>
+</ol>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">What NOT to Build (From Analysis)</h3>
+</div>
+
+<ul class="styled-list no-build-list">
+  <li>Custom SMTP infrastructure (use Smartlead/Instantly)</li>
+  <li>LinkedIn DM automation (ToS ban risk)</li>
+  <li>Mobile apps (web-first, responsive)</li>
+  <li>Browser extension for other platforms (yet &mdash; focus on Upwork first)</li>
+  <li>Custom CRM (export via webhooks instead)</li>
+</ul>
+
+<div class="subsection-header">
+  <h3 class="subsection-title">The Diamond Positioning</h3>
+</div>
+
+<div class="positioning-box">
+  <div class="positioning-quote">"Apollo + Clay + Artisan, but signal-first and 1/5 the price"</div>
+  <ul class="positioning-bullets">
+    <li><strong>Signal-first:</strong> Job postings = buying intent (nobody else does this)</li>
+    <li><strong>1/5 the price:</strong> BYOK = 90% cost savings on enrichment</li>
+    <li><strong>Transparent AI:</strong> See every agent decision (vs Artisan's black box)</li>
+    <li><strong>All-in-one:</strong> No stitching Clay + Smartlead + Apollo together</li>
+  </ul>
+</div>
+
+</div><!-- end content-wrapper -->
+
+</body>
+</html>

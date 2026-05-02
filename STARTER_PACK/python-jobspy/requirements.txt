@@ -1,0 +1,4 @@
+flask>=2.0.0
+flask-cors>=4.0.0
+python-jobspy>=1.1.0
+pandas>=2.0.0
