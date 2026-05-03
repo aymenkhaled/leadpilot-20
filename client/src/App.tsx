@@ -24,6 +24,13 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   return <ErrorBoundary><Component /></ErrorBoundary>;
 }
 
+function GuestRoute({ component: Component }: { component: React.ComponentType }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return <AppLoading />;
+  if (isAuthenticated) return <Redirect to="/app/dashboard" />;
+  return <Component />;
+}
+
 function AppLoading() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -45,10 +52,15 @@ export default function App() {
     <>
       <Switch>
         <Route path="/" component={LandingPage} />
-        <Route path="/login" component={LoginPage} />
-        <Route path="/signup" component={SignupPage} />
+        <Route path="/login">
+          {() => <GuestRoute component={LoginPage} />}
+        </Route>
+        <Route path="/signup">
+          {() => <GuestRoute component={SignupPage} />}
+        </Route>
 
-        <Route path="/app">
+        {/* /app/:rest* matches ALL paths under /app/ */}
+        <Route path="/app/:rest*">
           {() => (
             <AppLayout>
               <Switch>
