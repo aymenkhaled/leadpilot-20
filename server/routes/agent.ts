@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { db } from "../db.js";
 import { agentRuns, jobs, contacts, workspaceApiKeys, workspaceSettings } from "@shared/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../auth.js";
 import { decryptApiKey } from "../crypto.js";
 
@@ -18,8 +18,10 @@ router.get("/runs", async (req: AuthRequest, res) => {
     const wid = req.user!.workspaceId;
     const offset = (page - 1) * limit;
 
+    const approvalMode = req.query.approvalMode as string | undefined;
     const conditions = [eq(agentRuns.workspaceId, wid)];
     if (status) conditions.push(eq(agentRuns.status, status));
+    if (approvalMode) conditions.push(eq(agentRuns.approvalMode, approvalMode));
 
     const where = and(...conditions);
     const [rows, countResult] = await Promise.all([
@@ -27,9 +29,42 @@ router.get("/runs", async (req: AuthRequest, res) => {
       db.select({ count: sql<number>`count(*)` }).from(agentRuns).where(where),
     ]);
 
+    const total = Number(countResult[0]?.count ?? 0);
+
+    // Enrich runs with job title/company and contact name
+    const jobIds = rows.filter(r => r.jobId).map(r => r.jobId as string);
+    const contactIds = rows.filter(r => r.contactId).map(r => r.contactId as string);
+    const [jobRows, contactRows] = await Promise.all([
+      jobIds.length > 0
+        ? db.select({ id: jobs.id, title: jobs.title, companyName: jobs.companyName }).from(jobs).where(inArray(jobs.id, jobIds))
+        : Promise.resolve([]),
+      contactIds.length > 0
+        ? db.select({ id: contacts.id, fullName: contacts.fullName }).from(contacts).where(inArray(contacts.id, contactIds))
+        : Promise.resolve([]),
+    ]);
+    const jobMap = Object.fromEntries(jobRows.map(j => [j.id, j]));
+    const contactMap = Object.fromEntries(contactRows.map(c => [c.id, c]));
+
+    const enrichedRuns = rows.map(r => ({
+      ...r,
+      jobTitle: r.jobId ? jobMap[r.jobId]?.title : null,
+      jobCompany: r.jobId ? jobMap[r.jobId]?.companyName : null,
+      contactName: r.contactId ? contactMap[r.contactId]?.fullName : null,
+    }));
+
+    // Compute success rate across all runs (not just this page)
+    const [allStats] = await db.select({
+      completed: sql<number>`count(*) filter (where status = 'completed')`,
+      total: sql<number>`count(*)`,
+    }).from(agentRuns).where(eq(agentRuns.workspaceId, wid));
+    const successRate = Number(allStats?.total) > 0
+      ? Math.round((Number(allStats.completed) / Number(allStats.total)) * 100)
+      : 0;
+
     res.json({
-      runs: rows,
-      pagination: { page, limit, total: Number(countResult[0]?.count ?? 0) },
+      runs: enrichedRuns,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      successRate,
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -74,6 +109,35 @@ router.post("/runs", async (req: AuthRequest, res) => {
     res.status(201).json(run);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// POST /api/agent/runs/:id/retry  — re-queue a failed/cancelled run
+router.post("/runs/:id/retry", async (req: AuthRequest, res) => {
+  try {
+    const original = await db.query.agentRuns.findFirst({
+      where: and(eq(agentRuns.id, req.params.id), eq(agentRuns.workspaceId, req.user!.workspaceId)),
+    });
+    if (!original) return res.status(404).json({ error: "Run not found" });
+    if (!["failed", "cancelled"].includes(original.status)) {
+      return res.status(400).json({ error: "Only failed or cancelled runs can be retried" });
+    }
+    const [run] = await db.insert(agentRuns).values({
+      workspaceId: original.workspaceId,
+      jobId: original.jobId,
+      contactId: original.contactId,
+      approvalMode: original.approvalMode,
+      status: "pending",
+      steps: [],
+    }).returning();
+    runAgentAsync(run.id, original.workspaceId, {
+      jobId: original.jobId,
+      contactId: original.contactId,
+      approvalMode: original.approvalMode,
+    }).catch(console.error);
+    res.status(201).json(run);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 

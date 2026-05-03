@@ -63,11 +63,13 @@ router.post("/", async (req: AuthRequest, res) => {
 // GET /api/scrape/runs
 router.get("/runs", async (req: AuthRequest, res) => {
   try {
+    const { desc } = await import("drizzle-orm");
+    const limit = Math.min(Number(req.query.limit) || 20, 100);
     const runs = await db.select().from(scrapeRuns)
       .where(eq(scrapeRuns.workspaceId, req.user!.workspaceId))
-      .orderBy(scrapeRuns.startedAt)
-      .limit(20);
-    res.json(runs);
+      .orderBy(desc(scrapeRuns.createdAt))
+      .limit(limit);
+    res.json({ runs });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

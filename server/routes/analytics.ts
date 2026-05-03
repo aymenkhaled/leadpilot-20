@@ -20,8 +20,10 @@ router.get("/dashboard", async (req: AuthRequest, res) => {
       outreachStats,
       signalStats,
       agentStats,
+      pipelineStats,
       recentJobs,
       recentSignals,
+      recentOutreach,
       funnelData,
       creditUsage,
       workspace,
@@ -48,10 +50,24 @@ router.get("/dashboard", async (req: AuthRequest, res) => {
         total: sql<number>`count(*)`,
         completed: sql<number>`count(*) filter (where status = 'completed')`,
       }).from(agentRuns).where(eq(agentRuns.workspaceId, wid)),
+      // Won jobs and pipeline value
+      db.select({
+        won: sql<number>`count(*) filter (where status = 'won')`,
+        active: sql<number>`count(*) filter (where status not in ('won','lost'))`,
+        budgetSum: sql<number>`coalesce(sum(budget_max) filter (where status not in ('won','lost')), 0)`,
+      }).from(jobs).where(eq(jobs.workspaceId, wid)),
       // Recent jobs
       db.select().from(jobs).where(eq(jobs.workspaceId, wid)).orderBy(desc(jobs.discoveredAt)).limit(5),
       // Recent signals
       db.select().from(intentSignals).where(eq(intentSignals.workspaceId, wid)).orderBy(desc(intentSignals.detectedAt)).limit(5),
+      // Recent outreach
+      db.select({
+        id: outreach.id,
+        subject: outreach.subject,
+        status: outreach.status,
+        sentAt: outreach.sentAt,
+        createdAt: outreach.createdAt,
+      }).from(outreach).where(eq(outreach.workspaceId, wid)).orderBy(desc(outreach.createdAt)).limit(5),
       // Funnel
       db.select({ status: jobs.status, count: sql<number>`count(*)` })
         .from(jobs).where(eq(jobs.workspaceId, wid)).groupBy(jobs.status),
@@ -94,13 +110,18 @@ router.get("/dashboard", async (req: AuthRequest, res) => {
         total: Number(agentStats[0]?.total ?? 0),
         completed: Number(agentStats[0]?.completed ?? 0),
       },
+      pipeline: {
+        won: Number(pipelineStats[0]?.won ?? 0),
+        active: Number(pipelineStats[0]?.active ?? 0),
+        budgetSum: Number(pipelineStats[0]?.budgetSum ?? 0),
+      },
       funnel,
       credits: {
         balance: parseFloat(workspace?.credits?.toString() ?? "0"),
         usedThisMonth: Number(creditUsage[0]?.total ?? 0),
         plan: workspace?.plan ?? "free",
       },
-      recent: { jobs: recentJobs, signals: recentSignals },
+      recent: { jobs: recentJobs, signals: recentSignals, outreach: recentOutreach },
     });
   } catch (err: any) {
     console.error("Analytics error:", err);
@@ -121,6 +142,77 @@ router.get("/jobs-over-time", async (req: AuthRequest, res) => {
       .orderBy(sql`date_trunc('day', discovered_at)::date`);
 
     res.json(rows.map(r => ({ date: r.date, count: Number(r.count) })));
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/analytics/outreach-over-time
+router.get("/outreach-over-time", async (req: AuthRequest, res) => {
+  try {
+    const wid = req.user!.workspaceId;
+    const rows = await db.select({
+      date: sql<string>`date_trunc('day', sent_at)::date`,
+      count: sql<number>`count(*)`,
+      replied: sql<number>`count(*) filter (where status = 'replied')`,
+    }).from(outreach)
+      .where(and(
+        eq(outreach.workspaceId, wid),
+        gte(outreach.sentAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
+      ))
+      .groupBy(sql`date_trunc('day', sent_at)::date`)
+      .orderBy(sql`date_trunc('day', sent_at)::date`);
+
+    res.json(rows.map(r => ({ date: r.date, sent: Number(r.count), replied: Number(r.replied) })));
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/analytics/credits-over-time
+router.get("/credits-over-time", async (req: AuthRequest, res) => {
+  try {
+    const wid = req.user!.workspaceId;
+    const rows = await db.select({
+      date: sql<string>`date_trunc('day', created_at)::date`,
+      credits: sql<number>`coalesce(sum(credits_used::numeric), 0)`,
+    }).from(usageLog)
+      .where(and(
+        eq(usageLog.workspaceId, wid),
+        gte(usageLog.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
+      ))
+      .groupBy(sql`date_trunc('day', created_at)::date`)
+      .orderBy(sql`date_trunc('day', created_at)::date`);
+
+    res.json(rows.map(r => ({ date: r.date, credits: Number(r.credits) })));
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/analytics/top-companies
+router.get("/top-companies", async (req: AuthRequest, res) => {
+  try {
+    const wid = req.user!.workspaceId;
+    const rows = await db.select({
+      companyName: jobs.companyName,
+      companyDomain: jobs.companyDomain,
+      jobCount: sql<number>`count(distinct ${jobs.id})`,
+      contactCount: sql<number>`count(distinct ${contacts.id})`,
+    })
+      .from(jobs)
+      .leftJoin(contacts, and(eq(contacts.workspaceId, wid), eq(contacts.companyName, jobs.companyName)))
+      .where(and(eq(jobs.workspaceId, wid), sql`${jobs.companyName} is not null`))
+      .groupBy(jobs.companyName, jobs.companyDomain)
+      .orderBy(sql`count(distinct ${jobs.id}) desc`)
+      .limit(10);
+
+    res.json(rows.map(r => ({
+      name: r.companyName,
+      domain: r.companyDomain,
+      jobCount: Number(r.jobCount),
+      contactCount: Number(r.contactCount),
+    })));
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

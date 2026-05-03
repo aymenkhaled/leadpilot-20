@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { useSignup } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Target, ArrowRight, Check } from "lucide-react";
+import { Target, ArrowRight, Check, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface SignupForm {
@@ -14,10 +15,26 @@ interface SignupForm {
   password: string;
 }
 
+function getPasswordStrength(pw: string): { level: number; label: string; color: string } {
+  if (!pw) return { level: 0, label: "", color: "" };
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (score <= 1) return { level: 1, label: "Weak", color: "bg-red-500" };
+  if (score <= 3) return { level: 2, label: "Fair", color: "bg-yellow-500" };
+  return { level: 3, label: "Strong", color: "bg-green-500" };
+}
+
 export default function SignupPage() {
   const [, navigate] = useLocation();
   const signup = useSignup();
+  const [showPw, setShowPw] = useState(false);
+  const [pw, setPw] = useState("");
   const { register, handleSubmit, formState: { errors } } = useForm<SignupForm>();
+  const strength = getPasswordStrength(pw);
 
   const onSubmit = async (data: SignupForm) => {
     try {
@@ -51,6 +68,7 @@ export default function SignupPage() {
               <div>
                 <Label className="text-zinc-300 text-xs">First name</Label>
                 <Input
+                  autoComplete="given-name"
                   placeholder="Jane"
                   className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-zinc-600"
                   data-testid="input-first-name"
@@ -61,6 +79,7 @@ export default function SignupPage() {
               <div>
                 <Label className="text-zinc-300 text-xs">Last name</Label>
                 <Input
+                  autoComplete="family-name"
                   placeholder="Smith"
                   className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-zinc-600"
                   data-testid="input-last-name"
@@ -73,6 +92,7 @@ export default function SignupPage() {
               <Label className="text-zinc-300 text-xs">Work email</Label>
               <Input
                 type="email"
+                autoComplete="email"
                 placeholder="jane@company.com"
                 className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-zinc-600"
                 data-testid="input-email"
@@ -82,13 +102,37 @@ export default function SignupPage() {
             </div>
             <div>
               <Label className="text-zinc-300 text-xs">Password</Label>
-              <Input
-                type="password"
-                placeholder="At least 8 characters"
-                className="mt-1 bg-white/5 border-white/10 text-white placeholder:text-zinc-600"
-                data-testid="input-password"
-                {...register("password", { required: "Password required", minLength: { value: 8, message: "Minimum 8 characters" } })}
-              />
+              <div className="relative mt-1">
+                <Input
+                  type={showPw ? "text" : "password"}
+                  autoComplete="new-password"
+                  placeholder="At least 8 characters"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-zinc-600 pr-10"
+                  data-testid="input-password"
+                  {...register("password", {
+                    required: "Password required",
+                    minLength: { value: 8, message: "Minimum 8 characters" },
+                    onChange: (e) => setPw(e.target.value),
+                  })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                >
+                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {pw && (
+                <div className="flex items-center gap-2 mt-1.5">
+                  <div className="flex gap-1 flex-1">
+                    {[1, 2, 3].map(l => (
+                      <div key={l} className={`h-1 flex-1 rounded-full transition-colors ${strength.level >= l ? strength.color : "bg-white/10"}`} />
+                    ))}
+                  </div>
+                  <span className="text-[10px] text-zinc-500">{strength.label}</span>
+                </div>
+              )}
               {errors.password && <p className="text-xs text-red-400 mt-1">{errors.password.message}</p>}
             </div>
             <Button
@@ -117,6 +161,7 @@ export default function SignupPage() {
             Sign in
           </Link>
         </p>
+        <p className="text-center text-xs text-zinc-700 mt-3">Join 500+ growth teams already prospecting smarter</p>
       </div>
     </div>
   );

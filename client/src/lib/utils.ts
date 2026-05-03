@@ -45,18 +45,24 @@ export function formatBudget(min?: number | null, max?: number | null, type?: st
 }
 
 export function getPlatformColor(platform: string): string {
+  const p = (platform || "").toLowerCase().replace(/[^a-z]/g, "");
   const colors: Record<string, string> = {
-    LinkedIn: "bg-blue-500/20 text-blue-400",
-    Indeed: "bg-orange-500/20 text-orange-400",
-    Upwork: "bg-green-500/20 text-green-400",
-    Freelancer: "bg-cyan-500/20 text-cyan-400",
-    RemoteOK: "bg-purple-500/20 text-purple-400",
-    WeWorkRemotely: "bg-yellow-500/20 text-yellow-400",
-    Glassdoor: "bg-emerald-500/20 text-emerald-400",
-    Dice: "bg-red-500/20 text-red-400",
-    Wellfound: "bg-pink-500/20 text-pink-400",
+    linkedin: "bg-blue-500/20 text-blue-400",
+    indeed: "bg-orange-500/20 text-orange-400",
+    upwork: "bg-green-500/20 text-green-400",
+    freelancer: "bg-cyan-500/20 text-cyan-400",
+    remoteok: "bg-purple-500/20 text-purple-400",
+    weworkremotely: "bg-yellow-500/20 text-yellow-400",
+    glassdoor: "bg-emerald-500/20 text-emerald-400",
+    dice: "bg-red-500/20 text-red-400",
+    wellfound: "bg-pink-500/20 text-pink-400",
+    jobspy: "bg-indigo-500/20 text-indigo-400",
+    google: "bg-blue-500/20 text-blue-400",
+    ziprecruiter: "bg-rose-500/20 text-rose-400",
+    monster: "bg-orange-500/20 text-orange-400",
+    apify: "bg-violet-500/20 text-violet-400",
   };
-  return colors[platform] || "bg-zinc-500/20 text-zinc-400";
+  return colors[p] || "bg-zinc-500/20 text-zinc-400";
 }
 
 export function getStatusColor(status: string): string {

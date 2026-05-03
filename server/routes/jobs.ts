@@ -15,6 +15,8 @@ const listQuerySchema = z.object({
   platform: z.string().optional(),
   search: z.string().optional(),
   sort: z.enum(["newest", "oldest", "score", "budget"]).default("newest"),
+  remote: z.coerce.boolean().optional(),
+  contactFound: z.coerce.boolean().optional(),
 });
 
 // GET /api/jobs/stats/overview  ← MUST be before /:id to avoid param capture
@@ -53,6 +55,51 @@ router.post("/bulk-delete", async (req: AuthRequest, res) => {
   }
 });
 
+// GET /api/jobs/export/csv  ← MUST be before /:id
+router.get("/export/csv", async (req: AuthRequest, res) => {
+  try {
+    const wid = req.user!.workspaceId;
+    const { status, platform, search, contactFound } = req.query as Record<string, string>;
+    const conditions = [eq(jobs.workspaceId, wid)];
+    if (status && status !== "all") conditions.push(eq(jobs.status, status));
+    if (platform && platform !== "all") conditions.push(eq(jobs.platform, platform));
+    if (contactFound === "true") conditions.push(eq(jobs.contactFound, true));
+    if (contactFound === "false") conditions.push(eq(jobs.contactFound, false));
+    if (search) {
+      conditions.push(
+        or(
+          ilike(jobs.title, `%${search}%`),
+          ilike(jobs.companyName, `%${search}%`)
+        )!
+      );
+    }
+    const rows = await db.select().from(jobs).where(and(...conditions)).orderBy(desc(jobs.discoveredAt)).limit(5000);
+
+    const headers = ["Title", "Company", "Platform", "Status", "Location", "Remote", "Budget Min", "Budget Max", "Budget Type", "Score", "Source URL", "Discovered At"];
+    const csvRows = rows.map(r => [
+      r.title || "",
+      r.companyName || "",
+      r.platform || "",
+      r.status || "",
+      r.location || "",
+      r.remote ? "yes" : "no",
+      r.budgetMin?.toString() || "",
+      r.budgetMax?.toString() || "",
+      r.budgetType || "",
+      r.opportunityScore?.toString() || "",
+      r.sourceUrl || "",
+      r.discoveredAt?.toISOString() || "",
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(","));
+
+    const csv = [headers.join(","), ...csvRows].join("\n");
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="jobs-${Date.now()}.csv"`);
+    res.send(csv);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/jobs
 router.get("/", async (req: AuthRequest, res) => {
   try {
@@ -63,6 +110,8 @@ router.get("/", async (req: AuthRequest, res) => {
     const conditions = [eq(jobs.workspaceId, wid)];
     if (q.status) conditions.push(eq(jobs.status, q.status));
     if (q.platform) conditions.push(eq(jobs.platform, q.platform));
+    if (q.remote !== undefined) conditions.push(eq(jobs.remote, q.remote));
+    if (q.contactFound !== undefined) conditions.push(eq(jobs.contactFound, q.contactFound));
     if (q.search) {
       conditions.push(
         or(
@@ -73,15 +122,15 @@ router.get("/", async (req: AuthRequest, res) => {
       );
     }
 
-    const orderBy =
+    const orderByClause =
       q.sort === "oldest" ? jobs.discoveredAt
-        : q.sort === "score" ? jobs.opportunityScore
-          : q.sort === "budget" ? jobs.budgetMax
+        : q.sort === "score" ? desc(jobs.opportunityScore)
+          : q.sort === "budget" ? desc(jobs.budgetMax)
             : desc(jobs.discoveredAt);
 
     const [rows, countResult] = await Promise.all([
       db.select().from(jobs).where(and(...conditions))
-        .orderBy(typeof orderBy === "object" && "column" in orderBy ? orderBy : desc(jobs.discoveredAt))
+        .orderBy(orderByClause)
         .limit(q.limit).offset(offset),
       db.select({ count: sql<number>`count(*)` }).from(jobs).where(and(...conditions)),
     ]);

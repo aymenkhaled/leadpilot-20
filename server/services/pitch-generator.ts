@@ -115,10 +115,46 @@ export class PitchGenerator {
     return `${opener}${valueAdd}\n\nWould you have 15 minutes this week to chat?\n\n${signOff}`;
   }
 
-  async generateFollowUp(originalPitch: GeneratedPitch, daysSinceSent: number): Promise<GeneratedPitch> {
+  async generateFollowUp(originalPitch: GeneratedPitch, daysSinceSent: number, config?: Partial<PitchConfig>): Promise<GeneratedPitch> {
+    if (this.openai) {
+      try {
+        const OpenAI = (await import("openai")).default;
+        const client = new OpenAI({ apiKey: this.openai.apiKey });
+        const response = await client.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You write short, friendly follow-up cold emails. Under 60 words. No buzzwords. Sound human. Output JSON with "subject" and "body" keys.`,
+            },
+            {
+              role: "user",
+              content: `Original subject: "${originalPitch.subject}"\nDays since sent: ${daysSinceSent}\nWrite a brief, non-pushy follow-up. Return JSON: {"subject": "Re: ...", "body": "..."}`,
+            },
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.85,
+          max_tokens: 300,
+        });
+        const content = response.choices[0]?.message?.content;
+        if (content) {
+          const parsed = JSON.parse(content);
+          if (parsed.subject && parsed.body) return parsed;
+        }
+      } catch (e) {
+        console.warn("Follow-up generation failed, using fallback:", e);
+      }
+    }
+
+    const bumps = [
+      "Just bumping this up in case it got buried.",
+      `Following up on my note from ${daysSinceSent} days ago.`,
+      "Wanted to make sure this didn't slip through.",
+    ];
+    const bump = bumps[Math.floor(Math.random() * bumps.length)];
     return {
       subject: `Re: ${originalPitch.subject}`,
-      body: `Just bumping this up in case it got buried. Still interested in chatting if the timing works.\n\nThanks`,
+      body: `${bump} Still happy to chat if the timing works.\n\nThanks${config?.senderName ? `,\n${config.senderName}` : ""}`,
     };
   }
 }

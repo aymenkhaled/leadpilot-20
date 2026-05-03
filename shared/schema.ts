@@ -256,6 +256,7 @@ export const workspaceSettings = pgTable("workspace_settings", {
   profileDomain: text("profile_domain"),
   profilePortfolioUrl: text("profile_portfolio_url"),
   profileLinkedin: text("profile_linkedin"),
+  profileCalendarUrl: text("profile_calendar_url"),
   profileCvUrl: text("profile_cv_url"),
   profileCvContent: text("profile_cv_content"),
   profileServices: text("profile_services"),

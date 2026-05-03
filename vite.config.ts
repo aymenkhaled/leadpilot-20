@@ -12,6 +12,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./client/src"),
       "@shared": path.resolve(__dirname, "./shared"),
     },
+    dedupe: ["three", "react", "react-dom"],
+  },
+  optimizeDeps: {
+    include: ["three", "@react-three/fiber", "@react-three/drei"],
   },
   root: path.resolve(__dirname, "./client"),
   build: {

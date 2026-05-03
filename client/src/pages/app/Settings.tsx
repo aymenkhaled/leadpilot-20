@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -50,7 +50,11 @@ function ProfileTab() {
     onError: (e: any) => toast({ title: "Failed to save", description: e.message, variant: "destructive" }),
   });
 
-  const { register, handleSubmit } = useForm({ defaultValues: settings });
+  const { register, handleSubmit, reset } = useForm({ defaultValues: settings });
+
+  useEffect(() => {
+    if (settings) reset(settings);
+  }, [settings, reset]);
 
   return (
     <form onSubmit={handleSubmit(data => saveMutation.mutate(data))} className="space-y-6">
@@ -63,44 +67,48 @@ function ProfileTab() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Company name</Label>
-              <Input {...register("profileCompanyName")} placeholder="Acme Agency" className="mt-1" defaultValue={settings?.profileCompanyName || ""} />
+              <Input {...register("profileCompanyName")} autoComplete="organization" placeholder="Acme Agency" className="mt-1" />
             </div>
             <div>
               <Label>Your domain</Label>
-              <Input {...register("profileDomain")} placeholder="acme.agency" className="mt-1" defaultValue={settings?.profileDomain || ""} />
+              <Input {...register("profileDomain")} autoComplete="url" placeholder="acme.agency" className="mt-1" />
             </div>
           </div>
           <div>
             <Label>Website</Label>
-            <Input {...register("profileWebsite")} placeholder="https://acme.agency" className="mt-1" defaultValue={settings?.profileWebsite || ""} />
+            <Input {...register("profileWebsite")} autoComplete="url" placeholder="https://acme.agency" className="mt-1" />
           </div>
           <div>
             <Label>Services offered</Label>
-            <Input {...register("profileServices")} placeholder="React development, TypeScript, Node.js" className="mt-1" defaultValue={settings?.profileServices || ""} />
+            <Input {...register("profileServices")} placeholder="React development, TypeScript, Node.js" className="mt-1" />
           </div>
           <div>
             <Label>Pitch / value proposition</Label>
-            <Textarea {...register("profilePitch")} placeholder="We build fast, scalable web apps..." className="mt-1" rows={3} defaultValue={settings?.profilePitch || ""} />
+            <Textarea {...register("profilePitch")} placeholder="We build fast, scalable web apps..." className="mt-1" rows={3} />
           </div>
           <div>
             <Label>About you</Label>
-            <Textarea {...register("profileDescription")} placeholder="Brief bio or company description..." className="mt-1" rows={3} defaultValue={settings?.profileDescription || ""} />
+            <Textarea {...register("profileDescription")} placeholder="Brief bio or company description..." className="mt-1" rows={3} />
           </div>
           <div>
             <Label>Portfolio URL</Label>
-            <Input {...register("profilePortfolioUrl")} placeholder="https://portfolio.acme.agency" className="mt-1" defaultValue={settings?.profilePortfolioUrl || ""} />
+            <Input {...register("profilePortfolioUrl")} autoComplete="url" placeholder="https://portfolio.acme.agency" className="mt-1" />
           </div>
           <div>
             <Label>LinkedIn URL</Label>
-            <Input {...register("profileLinkedin")} placeholder="https://linkedin.com/in/yourname" className="mt-1" defaultValue={settings?.profileLinkedin || ""} />
+            <Input {...register("profileLinkedin")} autoComplete="url" placeholder="https://linkedin.com/in/yourname" className="mt-1" />
+          </div>
+          <div>
+            <Label>Calendar / booking URL <span className="text-muted-foreground text-xs">(included in emails if provided)</span></Label>
+            <Input {...register("profileCalendarUrl")} autoComplete="url" placeholder="https://cal.com/yourname" className="mt-1" />
           </div>
           <div>
             <Label>Example emails <span className="text-muted-foreground text-xs">(used to match your writing style)</span></Label>
-            <Textarea {...register("profileExampleEmails")} placeholder="Paste 2-3 emails you've sent before..." className="mt-1" rows={6} defaultValue={settings?.profileExampleEmails || ""} />
+            <Textarea {...register("profileExampleEmails")} placeholder="Paste 2-3 emails you've sent before..." className="mt-1" rows={6} />
           </div>
           <div>
             <Label>Notable projects / portfolio highlights</Label>
-            <Textarea {...register("profileProjects")} placeholder="Built X for Y that resulted in Z..." className="mt-1" rows={3} defaultValue={settings?.profileProjects || ""} />
+            <Textarea {...register("profileProjects")} placeholder="Built X for Y that resulted in Z..." className="mt-1" rows={3} />
           </div>
         </CardContent>
       </Card>
@@ -154,9 +162,27 @@ function ApiKeysTab() {
   });
 
   const existingByProvider = Object.fromEntries((existingKeys || []).map(k => [k.provider, k]));
+  const configuredCount = (existingKeys || []).length;
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-medium">API Keys (BYOK)</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {configuredCount > 0
+              ? <><span className="text-green-400 font-medium">{configuredCount} / {PROVIDERS.length} configured</span> — BYOK active</>
+              : "No keys configured — using managed credits (1.0 cr/enrichment)"
+            }
+          </p>
+        </div>
+        {configuredCount > 0 && (
+          <Badge className="bg-green-500/20 text-green-400 border-green-500/20">
+            {configuredCount} active
+          </Badge>
+        )}
+      </div>
+
       <Card className="bg-amber-500/5 border-amber-500/20">
         <CardContent className="p-4">
           <p className="text-sm text-amber-400">
@@ -253,6 +279,13 @@ function WaterfallTab() {
   const qc = useQueryClient();
   const [steps, setSteps] = useState<string[]>(["aleads", "prospeo", "apollo", "hunter"]);
 
+  useEffect(() => {
+    const defaultCfg = (configs || []).find((c: any) => c.isDefault) || configs?.[0];
+    if (defaultCfg?.steps?.length) {
+      setSteps((defaultCfg.steps as any[]).map((s: any) => s.provider));
+    }
+  }, [configs]);
+
   const saveMutation = useMutation({
     mutationFn: (data: any) => api.post("/settings/waterfall", data),
     onSuccess: () => {
@@ -270,10 +303,24 @@ function WaterfallTab() {
           <CardDescription>Providers are tried in order. Stops when a valid email is found.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {steps.map((provider, i) => (
+          {steps.map((provider, i) => {
+            const PROVIDER_DESC: Record<string, string> = {
+              aleads: "High-volume B2B email finder",
+              prospeo: "LinkedIn-based contact finder",
+              apollo: "Apollo.io data enrichment",
+              hunter: "Domain-based email search",
+              snov: "Snov.io email discovery",
+              dropcontact: "French GDPR-compliant enrichment",
+              clearbit: "Clearbit Enrichment API",
+              fullcontact: "FullContact person API",
+            };
+            return (
             <div key={provider} className="flex items-center gap-3 p-3 rounded-lg bg-accent/30 border border-border/50">
               <span className="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 text-xs flex items-center justify-center font-bold shrink-0">{i + 1}</span>
-              <span className="flex-1 font-medium text-sm capitalize">{provider}</span>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm capitalize">{provider}</div>
+                {PROVIDER_DESC[provider] && <div className="text-[11px] text-muted-foreground">{PROVIDER_DESC[provider]}</div>}
+              </div>
               <div className="flex gap-1">
                 <Button variant="ghost" size="icon" className="h-6 w-6" disabled={i === 0} onClick={() => {
                   const arr = [...steps];
@@ -290,7 +337,8 @@ function WaterfallTab() {
                 </Button>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           {/* Add provider */}
           {WATERFALL_PROVIDERS.filter(p => !steps.includes(p)).map(p => (
@@ -337,6 +385,136 @@ function WaterfallTab() {
   );
 }
 
+function SendingTab() {
+  const { data: settings } = useQuery({
+    queryKey: ["settings"],
+    queryFn: () => api.get<any>("/settings"),
+  });
+  const qc = useQueryClient();
+
+  const saveMutation = useMutation({
+    mutationFn: (data: any) => api.patch("/settings", data),
+    onSuccess: () => {
+      toast({ title: "Sending settings saved" });
+      qc.invalidateQueries({ queryKey: ["settings"] });
+    },
+    onError: (e: any) => toast({ title: "Failed to save", description: e.message, variant: "destructive" }),
+  });
+
+  const { register, handleSubmit, reset } = useForm({ defaultValues: settings });
+
+  useEffect(() => {
+    if (settings) reset(settings);
+  }, [settings, reset]);
+
+  return (
+    <form onSubmit={handleSubmit(data => saveMutation.mutate(data))} className="space-y-6">
+      <Card className="bg-amber-500/5 border-amber-500/20">
+        <CardContent className="p-4">
+          <p className="text-sm text-amber-400">
+            <strong>Outreach sending:</strong> Configure an email provider (Smartlead, Instantly) in the API Keys tab for fully automated sending. SMTP settings below are for direct sends.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-card/50 border-border/50">
+        <CardHeader>
+          <CardTitle className="text-sm">Sender Identity</CardTitle>
+          <CardDescription>Name and email address your outreach will appear to come from.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>From name</Label>
+              <Input {...register("senderName")} autoComplete="name" placeholder="Jane Smith" className="mt-1" />
+            </div>
+            <div>
+              <Label>From email</Label>
+              <Input {...register("senderEmail")} type="email" autoComplete="email" placeholder="jane@acme.agency" className="mt-1" />
+            </div>
+          </div>
+          <div>
+            <Label>Reply-to email <span className="text-xs text-muted-foreground">(optional)</span></Label>
+            <Input {...register("replyToEmail")} type="email" autoComplete="email" placeholder="replies@acme.agency" className="mt-1" />
+          </div>
+          <div>
+            <Label>Email signature <span className="text-xs text-muted-foreground">(appended to all emails)</span></Label>
+            <Textarea {...register("emailSignature")} placeholder="Best,&#10;Jane Smith&#10;Acme Agency · acme.agency" className="mt-1" rows={4} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-card/50 border-border/50">
+        <CardHeader>
+          <CardTitle className="text-sm">Sending Limits & Scheduling</CardTitle>
+          <CardDescription>Throttle outbound volume to protect your domain reputation.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Max emails per day</Label>
+              <Input {...register("maxEmailsPerDay", { valueAsNumber: true })} type="number" min={1} max={500} defaultValue={50} className="mt-1" />
+            </div>
+            <div>
+              <Label>Min delay between sends (seconds)</Label>
+              <Input {...register("minSendDelaySec", { valueAsNumber: true })} type="number" min={0} max={3600} defaultValue={60} className="mt-1" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-card/50 border-border/50">
+        <CardHeader>
+          <CardTitle className="text-sm">SMTP (optional)</CardTitle>
+          <CardDescription>Direct SMTP sending — only needed if not using Smartlead / Instantly.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>SMTP host</Label>
+              <Input {...register("smtpHost")} placeholder="smtp.gmail.com" className="mt-1" />
+            </div>
+            <div>
+              <Label>SMTP port</Label>
+              <Input {...register("smtpPort", { valueAsNumber: true })} type="number" placeholder="587" className="mt-1" />
+            </div>
+          </div>
+          <div>
+            <Label>SMTP username</Label>
+            <Input {...register("smtpUser")} autoComplete="username" placeholder="jane@acme.agency" className="mt-1" />
+          </div>
+          <div>
+            <Label>SMTP password</Label>
+            <Input {...register("smtpPass")} type="password" autoComplete="current-password" placeholder="••••••••" className="mt-1" />
+          </div>
+          <div className="flex items-center gap-3 pt-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => {
+                api.post("/settings/test-smtp").then(() => {
+                  toast({ title: "SMTP test passed", description: "Connection and auth successful" });
+                }).catch((e: any) => {
+                  toast({ title: "SMTP test failed", description: e.message, variant: "destructive" });
+                });
+              }}
+            >
+              <TestTube className="w-3.5 h-3.5" /> Test connection
+            </Button>
+            <span className="text-xs text-muted-foreground">Sends a test email to your From address</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Button type="submit" className="bg-indigo-600 hover:bg-indigo-500" loading={saveMutation.isPending}>
+        Save sending settings
+      </Button>
+    </form>
+  );
+}
+
 function BillingTab() {
   const { workspace } = useAuth();
 
@@ -361,6 +539,7 @@ function BillingTab() {
     { id: "free", name: "Free", price: 0, credits: 50, features: ["50 credits/mo", "3 platforms", "Manual enrichment"] },
     { id: "pro", name: "Pro", price: 79, credits: 2000, features: ["2,000 credits/mo", "All platforms", "Waterfall enrichment", "Agent SDR"] },
     { id: "agency", name: "Agency", price: 249, credits: 10000, features: ["10,000 credits/mo", "Unlimited workspaces", "Webhook API", "Dedicated CSM"] },
+    { id: "scale", name: "Scale", price: 799, credits: 50000, features: ["50,000 credits/mo", "White-label", "SLA 99.9%", "Custom enrichment", "Priority support"] },
   ];
 
   return (
@@ -382,7 +561,7 @@ function BillingTab() {
         </CardContent>
       </Card>
 
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
         {plans.map(plan => (
           <Card key={plan.id} className={`border ${workspace?.plan === plan.id ? "border-indigo-500/50 bg-indigo-500/5" : "border-border/50 bg-card/50"}`}>
             <CardContent className="p-4">
@@ -425,9 +604,21 @@ function NotificationsTab() {
     onSuccess: () => { toast({ title: "Saved" }); qc.invalidateQueries({ queryKey: ["settings"] }); },
   });
 
-  const [notifySignals, setNotifySignals] = useState(settings?.notifyNewSignals ?? true);
-  const [notifyEnrich, setNotifyEnrich] = useState(settings?.notifyEnrichComplete ?? true);
-  const [notifyReply, setNotifyReply] = useState(settings?.notifyReply ?? true);
+  const [notifySignals, setNotifySignals] = useState<boolean>(true);
+  const [notifyEnrich, setNotifyEnrich] = useState<boolean>(true);
+  const [notifyReply, setNotifyReply] = useState<boolean>(true);
+  const [notifyAgent, setNotifyAgent] = useState<boolean>(true);
+  const [notifyCredits, setNotifyCredits] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (settings) {
+      setNotifySignals(settings.notifyNewSignals ?? true);
+      setNotifyEnrich(settings.notifyEnrichComplete ?? true);
+      setNotifyReply(settings.notifyReply ?? true);
+      setNotifyAgent(settings.notifyAgentComplete ?? true);
+      setNotifyCredits(settings.notifyLowCredits ?? true);
+    }
+  }, [settings]);
 
   return (
     <div className="space-y-6">
@@ -437,9 +628,11 @@ function NotificationsTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           {[
-            { label: "New intent signals", desc: "Alert when strong signals are detected", value: notifySignals, set: setNotifySignals, key: "notifyNewSignals" },
-            { label: "Enrichment complete", desc: "Alert when a job is fully enriched", value: notifyEnrich, set: setNotifyEnrich, key: "notifyEnrichComplete" },
-            { label: "Email replies", desc: "Alert when a prospect replies", value: notifyReply, set: setNotifyReply, key: "notifyReply" },
+            { label: "New intent signals", desc: "Alert when strong buying signals are detected (funding, hiring spike, leadership change)", value: notifySignals, set: setNotifySignals, key: "notifyNewSignals" },
+            { label: "Enrichment complete", desc: "Alert when a job is fully enriched with company and contact data", value: notifyEnrich, set: setNotifyEnrich, key: "notifyEnrichComplete" },
+            { label: "Email replies", desc: "Alert when a prospect replies to one of your outreach emails", value: notifyReply, set: setNotifyReply, key: "notifyReply" },
+            { label: "Agent run complete", desc: "Alert when an autonomous agent run finishes (success or failure)", value: notifyAgent, set: setNotifyAgent, key: "notifyAgentComplete" },
+            { label: "Credit balance low", desc: "Alert when your credit balance drops below 10% of your plan limit", value: notifyCredits, set: setNotifyCredits, key: "notifyLowCredits" },
           ].map(({ label, desc, value, set, key }) => (
             <div key={key} className="flex items-center justify-between">
               <div>
@@ -480,6 +673,7 @@ export default function SettingsPage() {
             { value: "profile", label: "Profile", icon: User },
             { value: "api-keys", label: "API Keys", icon: Key },
             { value: "waterfall", label: "Waterfall", icon: Layers },
+            { value: "sending", label: "Sending", icon: Send },
             { value: "billing", label: "Billing", icon: CreditCard },
             { value: "notifications", label: "Notifications", icon: Bell },
           ].map(({ value, label, icon: Icon }) => (
@@ -492,6 +686,7 @@ export default function SettingsPage() {
         <TabsContent value="profile"><ProfileTab /></TabsContent>
         <TabsContent value="api-keys"><ApiKeysTab /></TabsContent>
         <TabsContent value="waterfall"><WaterfallTab /></TabsContent>
+        <TabsContent value="sending"><SendingTab /></TabsContent>
         <TabsContent value="billing"><BillingTab /></TabsContent>
         <TabsContent value="notifications"><NotificationsTab /></TabsContent>
       </Tabs>

@@ -182,6 +182,33 @@ router.post("/waterfall", async (req: AuthRequest, res) => {
   }
 });
 
+// POST /api/settings/test-smtp
+router.post("/test-smtp", async (req: AuthRequest, res) => {
+  try {
+    const wid = req.user!.workspaceId;
+    const settings = await db.query.workspaceSettings.findFirst({
+      where: eq(workspaceSettings.workspaceId, wid),
+    });
+    if (!settings?.smtpHost || !settings?.smtpUser) {
+      return res.status(400).json({ error: "SMTP not configured — set host, port, user and password first" });
+    }
+    // Dynamic import to avoid loading nodemailer unless needed
+    const nodemailer = await import("nodemailer").catch(() => null);
+    if (!nodemailer) return res.status(500).json({ error: "nodemailer not available" });
+    const transporter = nodemailer.default.createTransport({
+      host: settings.smtpHost,
+      port: settings.smtpPort || 587,
+      secure: (settings.smtpPort || 587) === 465,
+      auth: { user: settings.smtpUser, pass: settings.smtpPass || "" },
+      connectionTimeout: 8000,
+    });
+    await transporter.verify();
+    res.json({ ok: true, message: "SMTP connection verified" });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || "SMTP connection failed" });
+  }
+});
+
 // PATCH /api/settings/waterfall/:id
 router.patch("/waterfall/:id", async (req: AuthRequest, res) => {
   try {

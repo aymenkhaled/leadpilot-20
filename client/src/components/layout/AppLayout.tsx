@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth, useLogout } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import KeyboardShortcutsDialog from "@/components/KeyboardShortcutsDialog";
 import { cn, initials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -9,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   LayoutDashboard, Briefcase, Zap, Building2, Users, Mail, Bot, Settings,
   Shield, ChevronLeft, ChevronRight, LogOut, CreditCard, Menu, X, Target,
-  TrendingUp,
+  TrendingUp, Keyboard,
 } from "lucide-react";
 import { Redirect } from "wouter";
 
@@ -47,11 +50,32 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, workspace, isLoading, isAuthenticated } = useAuth();
   const logout = useLogout();
 
+  const { data: pendingRunsData } = useQuery({
+    queryKey: ["agent-runs-pending"],
+    queryFn: () => api.get<any>("/agent/runs?status=pending&limit=1"),
+    refetchInterval: 12000,
+    enabled: isAuthenticated,
+  });
+  const { data: runningRunsData } = useQuery({
+    queryKey: ["agent-runs-running"],
+    queryFn: () => api.get<any>("/agent/runs?status=running&limit=1"),
+    refetchInterval: 5000,
+    enabled: isAuthenticated,
+  });
+  const { data: signalStatsData } = useQuery({
+    queryKey: ["signals", "stats"],
+    queryFn: () => api.get<any>("/signals/stats"),
+    refetchInterval: 30000,
+    enabled: isAuthenticated,
+  });
+  const pendingCount = (pendingRunsData?.pagination?.total || 0) + (runningRunsData?.pagination?.total || 0);
+  const unactedSignals = signalStatsData?.unacted || 0;
+
   if (isLoading) return null;
   if (!isAuthenticated) return <Redirect to="/login" />;
 
   const navItems = NAV_ITEMS.filter(item => !item.adminOnly || user?.isAdmin);
-  const credits = workspace?.credits ?? 0;
+  const credits = parseFloat(String(workspace?.credits ?? 0));
 
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
     <div className={cn(
@@ -104,6 +128,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   {item.badge && (!collapsed || mobile) && (
                     <Badge variant="indigo" className="ml-auto text-[10px] px-1.5 py-0">{item.badge}</Badge>
                   )}
+                  {item.href === "/app/signals" && unactedSignals > 0 && (!collapsed || mobile) && (
+                    <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-yellow-500 text-[10px] font-bold text-white px-1">
+                      {unactedSignals > 99 ? "99+" : unactedSignals}
+                    </span>
+                  )}
+                  {item.href === "/app/agent" && pendingCount > 0 && (!collapsed || mobile) && (
+                    <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-1">
+                      {pendingCount}
+                    </span>
+                  )}
                 </div>
               </Link>
             );
@@ -111,20 +145,40 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
       </ScrollArea>
 
+      {/* Keyboard shortcut hint */}
+      {(!collapsed || mobile) && (
+        <div className="px-4 pb-1">
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/50">
+            <Keyboard className="w-3 h-3" />
+            <span>Press <kbd className="px-1 py-px bg-muted rounded text-[9px] font-mono border border-border">?</kbd> for shortcuts</span>
+          </div>
+        </div>
+      )}
+
       {/* Credits */}
       {(!collapsed || mobile) && (
         <div className="p-3 border-t border-border">
-          <div className="rounded-lg bg-indigo-500/5 border border-indigo-500/10 p-3">
+          <div className={cn(
+            "rounded-lg border p-3",
+            credits < 10
+              ? "bg-red-500/5 border-red-500/20"
+              : "bg-indigo-500/5 border-indigo-500/10"
+          )}>
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs text-muted-foreground">Credits</span>
               <span className={cn("text-xs font-semibold px-1.5 py-0.5 rounded-full", PLAN_COLORS[workspace?.plan || "free"])}>
                 {workspace?.plan?.toUpperCase()}
               </span>
             </div>
-            <div className="text-xl font-bold text-indigo-400">{credits.toLocaleString()}</div>
+            <div className={cn("text-xl font-bold", credits < 10 ? "text-red-400" : "text-indigo-400")}>
+              {credits.toLocaleString()}
+            </div>
+            {credits < 10 && (
+              <p className="text-[10px] text-red-400 mt-0.5">Low credits — upgrade plan</p>
+            )}
             <div className="w-full h-1.5 rounded-full bg-border mt-2">
               <div
-                className="h-full rounded-full bg-indigo-500 transition-all"
+                className={cn("h-full rounded-full transition-all", credits < 10 ? "bg-red-500" : "bg-indigo-500")}
                 style={{ width: `${Math.min(100, (credits / getPlanMax(workspace?.plan)) * 100)}%` }}
               />
             </div>
@@ -212,6 +266,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {children}
           </main>
         </ScrollArea>
+        <KeyboardShortcutsDialog />
       </div>
     </div>
   );

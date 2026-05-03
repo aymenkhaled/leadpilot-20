@@ -1,7 +1,7 @@
-import React, { useRef, useEffect, useState, Suspense, Component, ErrorInfo, ReactNode } from "react";
+import React, { useRef, useEffect, useState, useMemo, Suspense, Component, ErrorInfo, ReactNode } from "react";
 import { Link } from "wouter";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sphere, MeshDistortMaterial, Float, Stars } from "@react-three/drei";
 import * as THREE from "three";
 import { Button } from "@/components/ui/button";
@@ -21,107 +21,313 @@ class WebGLErrorBoundary extends Component<{ children: ReactNode; fallback: Reac
   render() { return this.state.hasError ? this.props.fallback : this.props.children; }
 }
 
-// ─── CSS Globe Fallback (no WebGL needed) ─────────────────────────────────────
+// ─── CSS Fallback: Neural Signal Network ─────────────────────────────────────
+const CSS_NODES = [
+  { angle: 0,   r: 130, color: "#10b981", label: "Series B $40M" },
+  { angle: 60,  r: 115, color: "#6366f1", label: "12 DevOps hires" },
+  { angle: 120, r: 140, color: "#f59e0b", label: "AWS → GCP" },
+  { angle: 195, r: 120, color: "#ec4899", label: "New CTO hired" },
+  { angle: 255, r: 135, color: "#3b82f6", label: "Series A $12M" },
+  { angle: 315, r: 110, color: "#8b5cf6", label: "Stack migration" },
+];
+
 function CSSGlobeFallback() {
   return (
     <div className="w-full h-full flex items-center justify-center">
-      <div className="relative w-80 h-80">
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-600/30 via-violet-600/20 to-transparent border border-indigo-500/30 animate-[spin_20s_linear_infinite]" />
-        <div className="absolute inset-4 rounded-full bg-gradient-to-br from-indigo-500/20 via-violet-500/10 to-transparent border border-indigo-400/20 animate-[spin_15s_linear_infinite_reverse]" />
-        <div className="absolute inset-8 rounded-full bg-gradient-to-br from-indigo-400/15 to-transparent border border-indigo-300/10 animate-[spin_10s_linear_infinite]" />
+      <div className="relative" style={{ width: 340, height: 340 }}>
+        {/* Rings */}
+        <div className="absolute inset-0 rounded-full border border-indigo-500/20 animate-[spin_22s_linear_infinite]" />
+        <div className="absolute inset-6 rounded-full border border-violet-500/15 animate-[spin_16s_linear_infinite_reverse]" />
+        <div className="absolute inset-12 rounded-full border border-indigo-400/10 animate-[spin_11s_linear_infinite]" />
+
+        {/* Center orb */}
+        <div className="absolute inset-[38%] rounded-full bg-gradient-to-br from-indigo-500 to-violet-600"
+          style={{ boxShadow: "0 0 60px 20px rgba(99,102,241,0.35)" }} />
+        <div className="absolute inset-[42%] rounded-full bg-white/10 animate-pulse" />
+
+        {/* LeadPilot label */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 opacity-60 blur-xl animate-pulse" />
+          <div className="text-[10px] font-bold text-indigo-300 tracking-widest mt-20 select-none">LEADPILOT</div>
         </div>
-        {[...Array(8)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 rounded-full bg-indigo-400/60"
-            style={{
-              top: `${50 + 40 * Math.sin((i / 8) * Math.PI * 2)}%`,
-              left: `${50 + 40 * Math.cos((i / 8) * Math.PI * 2)}%`,
-              animationDelay: `${i * 0.3}s`,
-            }}
-          />
-        ))}
+
+        {/* Signal nodes orbiting */}
+        {CSS_NODES.map((node, i) => {
+          const rad = (node.angle * Math.PI) / 180;
+          const cx = 50 + (node.r / 3.4) * Math.cos(rad);
+          const cy = 50 + (node.r / 3.4) * Math.sin(rad);
+          return (
+            <div
+              key={i}
+              className="absolute"
+              style={{ left: `${cx}%`, top: `${cy}%`, transform: "translate(-50%,-50%)" }}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.25, duration: 0.5 }}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-full border whitespace-nowrap"
+                style={{
+                  backgroundColor: `${node.color}18`,
+                  borderColor: `${node.color}40`,
+                  boxShadow: `0 0 12px ${node.color}30`,
+                }}
+              >
+                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: node.color }} />
+                <span className="text-[10px] font-medium" style={{ color: node.color }}>{node.label}</span>
+              </motion.div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-// ─── 3D Globe Component ──────────────────────────────────────────────────────
-function IntentGlobe() {
+// ─── 3D: Pulsing Signal Node ──────────────────────────────────────────────────
+function SignalNode({ position, color, delay = 0, size = 0.13 }: {
+  position: [number, number, number]; color: string; delay?: number; size?: number;
+}) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const particlesRef = useRef<THREE.Points>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y += 0.003;
-      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.3) * 0.1;
+      const t = state.clock.elapsedTime + delay;
+      meshRef.current.scale.setScalar(0.85 + 0.18 * Math.sin(t * 2.2));
+      (meshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity =
+        0.7 + 0.5 * Math.sin(t * 2.2);
     }
-    if (particlesRef.current) {
-      particlesRef.current.rotation.y += 0.001;
+    if (glowRef.current) {
+      const t = state.clock.elapsedTime + delay;
+      glowRef.current.scale.setScalar(1.0 + 0.4 * Math.sin(t * 1.8));
+      (glowRef.current.material as THREE.MeshBasicMaterial).opacity =
+        0.08 + 0.06 * Math.sin(t * 1.8);
     }
   });
 
-  // Generate random particles on sphere surface
-  const count = 150;
-  const positions = new Float32Array(count * 3);
-  for (let i = 0; i < count; i++) {
-    const phi = Math.acos(-1 + (2 * i) / count);
-    const theta = Math.sqrt(count * Math.PI) * phi;
-    positions[i * 3] = 1.6 * Math.sin(phi) * Math.cos(theta);
-    positions[i * 3 + 1] = 1.6 * Math.sin(phi) * Math.sin(theta);
-    positions[i * 3 + 2] = 1.6 * Math.cos(phi);
-  }
+  const col = new THREE.Color(color);
 
   return (
-    <group>
-      <Stars radius={80} depth={50} count={3000} factor={3} saturation={0.5} fade speed={0.5} />
-
-      {/* Main globe */}
-      <Float speed={1.5} rotationIntensity={0.3} floatIntensity={0.5}>
+    <Float speed={1.8 + delay * 0.3} rotationIntensity={0} floatIntensity={0.35}>
+      <group position={position}>
+        {/* Glow halo */}
+        <mesh ref={glowRef}>
+          <sphereGeometry args={[size * 2.8, 12, 12]} />
+          <meshBasicMaterial color={col} transparent opacity={0.12} />
+        </mesh>
+        {/* Core */}
         <mesh ref={meshRef}>
-          <Sphere args={[1.4, 64, 64]}>
+          <sphereGeometry args={[size, 18, 18]} />
+          <meshStandardMaterial
+            color={col}
+            emissive={col}
+            emissiveIntensity={0.9}
+            roughness={0.15}
+            metalness={0.6}
+          />
+        </mesh>
+      </group>
+    </Float>
+  );
+}
+
+// ─── 3D: Network connection lines ─────────────────────────────────────────────
+function NetworkLines({ nodes }: { nodes: [number, number, number][] }) {
+  const ref = useRef<THREE.LineSegments>(null);
+
+  const geometry = useMemo(() => {
+    const pts: number[] = [];
+    // Hub spokes (center → each node)
+    for (const n of nodes) pts.push(0, 0, 0, n[0], n[1], n[2]);
+    // Cross-links between every-other node for a web feel
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i], b = nodes[(i + 2) % nodes.length];
+      pts.push(a[0], a[1], a[2], b[0], b[1], b[2]);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+    return geo;
+  }, [nodes]);
+
+  useFrame((state) => {
+    if (ref.current) {
+      (ref.current.material as THREE.LineBasicMaterial).opacity =
+        0.22 + 0.1 * Math.sin(state.clock.elapsedTime * 1.3);
+    }
+  });
+
+  return (
+    <lineSegments ref={ref} geometry={geometry}>
+      <lineBasicMaterial color="#6366f1" transparent opacity={0.25} />
+    </lineSegments>
+  );
+}
+
+// ─── 3D: Particle traveling along an edge ─────────────────────────────────────
+function DataStream({ from, to, color, speed = 0.5 }: {
+  from: [number, number, number]; to: [number, number, number]; color: string; speed?: number;
+}) {
+  const ref = useRef<THREE.Mesh>(null);
+  const col = new THREE.Color(color);
+
+  useFrame((state) => {
+    if (ref.current) {
+      const t = (state.clock.elapsedTime * speed) % 1;
+      ref.current.position.set(
+        from[0] + (to[0] - from[0]) * t,
+        from[1] + (to[1] - from[1]) * t,
+        from[2] + (to[2] - from[2]) * t,
+      );
+      (ref.current.material as THREE.MeshBasicMaterial).opacity =
+        Math.sin(t * Math.PI) * 0.9;
+    }
+  });
+
+  return (
+    <mesh ref={ref}>
+      <sphereGeometry args={[0.038, 8, 8]} />
+      <meshBasicMaterial color={col} transparent opacity={0.9} />
+    </mesh>
+  );
+}
+
+// ─── 3D: Ambient particle cloud ───────────────────────────────────────────────
+function ParticleCloud({ count = 220 }: { count?: number }) {
+  const ref = useRef<THREE.Points>(null);
+
+  const positions = useMemo(() => {
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      const r = 2.5 + Math.random() * 1.8;
+      const phi = Math.acos(-1 + (2 * i) / count);
+      const theta = Math.sqrt(count * Math.PI) * phi + Math.random() * 0.5;
+      arr[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      arr[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      arr[i * 3 + 2] = r * Math.cos(phi);
+    }
+    return arr;
+  }, [count]);
+
+  useFrame((state) => {
+    if (ref.current) {
+      ref.current.rotation.y += 0.0008;
+      ref.current.rotation.x = 0.05 * Math.sin(state.clock.elapsedTime * 0.2);
+    }
+  });
+
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} />
+      </bufferGeometry>
+      <pointsMaterial color="#818cf8" size={0.04} sizeAttenuation transparent opacity={0.55} />
+    </points>
+  );
+}
+
+// ─── 3D: Main Signal Network Scene ───────────────────────────────────────────
+const NODE_DATA: Array<{ pos: [number, number, number]; color: string; delay: number }> = [
+  { pos: [2.0,  0.4,  0.5],  color: "#10b981", delay: 0.0 },
+  { pos: [-1.5, 1.3,  0.8],  color: "#6366f1", delay: 0.6 },
+  { pos: [0.7,  -1.9, 0.4],  color: "#f59e0b", delay: 1.1 },
+  { pos: [-1.9, -0.7, -0.5], color: "#ec4899", delay: 1.6 },
+  { pos: [0.6,  1.6,  -1.7], color: "#3b82f6", delay: 2.1 },
+  { pos: [-0.4, -0.6, -2.1], color: "#8b5cf6", delay: 2.6 },
+];
+
+function SignalNetwork() {
+  const groupRef = useRef<THREE.Group>(null);
+  const { mouse } = useThree();
+
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += 0.0018;
+      // Subtle mouse parallax
+      groupRef.current.rotation.x +=
+        (mouse.y * 0.12 - groupRef.current.rotation.x) * 0.04;
+    }
+  });
+
+  const nodePositions = NODE_DATA.map(n => n.pos);
+
+  return (
+    <group ref={groupRef}>
+      <Stars radius={90} depth={55} count={2200} factor={3} saturation={0.2} fade speed={0.25} />
+
+      {/* Central hub sphere */}
+      <Float speed={1.4} rotationIntensity={0.25} floatIntensity={0.4}>
+        <mesh>
+          <Sphere args={[1.15, 72, 72]}>
             <MeshDistortMaterial
               color="#6366f1"
               attach="material"
-              distort={0.15}
-              speed={2}
-              roughness={0.2}
-              metalness={0.8}
-              wireframe={false}
+              distort={0.22}
+              speed={2.8}
+              roughness={0.08}
+              metalness={0.92}
               transparent
-              opacity={0.85}
+              opacity={0.92}
             />
           </Sphere>
         </mesh>
 
-        {/* Grid lines */}
+        {/* Wireframe shell */}
         <mesh>
-          <Sphere args={[1.42, 32, 32]}>
-            <meshBasicMaterial color="#a78bfa" wireframe transparent opacity={0.15} />
+          <Sphere args={[1.18, 28, 28]}>
+            <meshBasicMaterial color="#a78bfa" wireframe transparent opacity={0.08} />
           </Sphere>
+        </mesh>
+
+        {/* Equatorial ring */}
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[1.42, 0.025, 16, 120]} />
+          <meshBasicMaterial color="#a78bfa" transparent opacity={0.45} />
+        </mesh>
+
+        {/* Tilted accent ring */}
+        <mesh rotation={[Math.PI / 2.4, 0.6, 0]}>
+          <torusGeometry args={[1.62, 0.012, 12, 80]} />
+          <meshBasicMaterial color="#6366f1" transparent opacity={0.22} />
         </mesh>
       </Float>
 
-      {/* Floating particles */}
-      <points ref={particlesRef}>
-        <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            count={count}
-            array={positions}
-            itemSize={3}
-          />
-        </bufferGeometry>
-        <pointsMaterial color="#a78bfa" size={0.05} sizeAttenuation transparent opacity={0.8} />
-      </points>
+      {/* Signal nodes */}
+      {NODE_DATA.map((n, i) => (
+        <SignalNode key={i} position={n.pos} color={n.color} delay={n.delay} />
+      ))}
 
-      {/* Outer glow ring */}
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1.8, 0.02, 16, 100]} />
-        <meshBasicMaterial color="#6366f1" transparent opacity={0.3} />
-      </mesh>
+      {/* Network connection lines */}
+      <NetworkLines nodes={nodePositions} />
+
+      {/* Data stream particles on each spoke */}
+      {NODE_DATA.map((n, i) => (
+        <DataStream
+          key={`stream-${i}`}
+          from={[0, 0, 0]}
+          to={n.pos}
+          color={n.color}
+          speed={0.38 + i * 0.07}
+        />
+      ))}
+
+      {/* Reverse-direction streams on alternating edges */}
+      {NODE_DATA.filter((_, i) => i % 2 === 0).map((n, i) => (
+        <DataStream
+          key={`stream-rev-${i}`}
+          from={n.pos}
+          to={[0, 0, 0]}
+          color={n.color}
+          speed={0.28 + i * 0.1}
+        />
+      ))}
+
+      {/* Ambient particle cloud */}
+      <ParticleCloud count={240} />
+
+      {/* Colored light sources */}
+      <pointLight position={[3, 2, 2]} intensity={1.2} color="#6366f1" />
+      <pointLight position={[-3, -2, -2]} intensity={0.7} color="#a78bfa" />
+      <pointLight position={[0, 3, -3]} intensity={0.5} color="#10b981" />
     </group>
   );
 }
@@ -229,6 +435,10 @@ const COMPARISON = [
   { feature: "Champion tracking", us: true, apollo: true, clay: false },
   { feature: "Waterfall enrichment designer", us: true, apollo: false, clay: true },
   { feature: "Webhook API", us: true, apollo: true, clay: true },
+  { feature: "AES-256 encrypted key vault", us: true, apollo: false, clay: false },
+  { feature: "Autonomous follow-up sequences", us: true, apollo: false, clay: false },
+  { feature: "CSV export all data", us: true, apollo: true, clay: true },
+  { feature: "Free tier (no credit card)", us: true, apollo: false, clay: false },
 ];
 
 const PRICING = [
@@ -256,6 +466,15 @@ const PRICING = [
     credits: 10000,
     features: ["10,000 credits/month", "Unlimited workspaces", "White-label ready", "Webhook API", "Dedicated CSM", "SLA guarantee"],
     cta: "Start Agency",
+    href: "/signup",
+    featured: false,
+  },
+  {
+    name: "Scale",
+    price: 799,
+    credits: 50000,
+    features: ["50,000 credits/month", "Custom enrichment pipelines", "SLA 99.9%", "Dedicated infrastructure", "White-glove onboarding", "24/7 phone support"],
+    cta: "Contact sales",
     href: "/signup",
     featured: false,
   },
@@ -315,6 +534,14 @@ const FAQ = [
     q: "Does the agent send emails automatically?",
     a: "Only if you enable Autonomous mode. By default, the agent drafts emails and waits for your approval. You can also set it to Draft-only mode where it never sends without your action.",
   },
+  {
+    q: "What enrichment providers do you support?",
+    a: "Waterfall enrichment tries providers in your configured order: A-Leads → Prospeo → Apollo → Hunter.io → RocketReach. When BYOK is enabled, it uses your key for that provider at 0.1 credit cost instead of 1.0. You can reorder the waterfall in Settings → Waterfall.",
+  },
+  {
+    q: "Can I use LeadPilot for freelance / agency client work?",
+    a: "Absolutely. The Agency plan ($249/mo) supports unlimited workspaces — one per client — with white-label-ready output, webhook API for CRM sync, and a dedicated customer success manager.",
+  },
 ];
 
 export default function LandingPage() {
@@ -359,27 +586,47 @@ export default function LandingPage() {
 
         <div className="container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
           {/* Left: Text */}
-          <div className="space-y-6">
-            <div>
+          <motion.div
+            className="space-y-6"
+            initial={{ opacity: 0, x: -32 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}>
               <Badge className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs px-3 py-1">
                 <Zap className="w-3 h-3 mr-1" /> Intent-driven B2B prospecting
               </Badge>
-            </div>
+            </motion.div>
 
-            <h1 className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight">
+            <motion.h1
+              className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+            >
               Turn every new{" "}
               <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
                 job posting
               </span>{" "}
               into a booked meeting
-            </h1>
+            </motion.h1>
 
-            <p className="text-lg text-zinc-400 leading-relaxed max-w-xl">
+            <motion.p
+              className="text-lg text-zinc-400 leading-relaxed max-w-xl"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35, duration: 0.5 }}
+            >
               LeadPilot detects intent signals from 30+ job boards, enriches decision-makers with waterfall AI,
               and lets an autonomous agent draft, send, and follow up — all while you focus on closing.
-            </p>
+            </motion.p>
 
-            <div className="flex flex-wrap gap-3">
+            <motion.div
+              className="flex flex-wrap gap-3"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+            >
               <Link href="/signup">
                 <Button size="lg" className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/25 px-8">
                   Start free — no credit card
@@ -390,27 +637,50 @@ export default function LandingPage() {
                 <Play className="w-4 h-4" />
                 Watch demo
               </Button>
-            </div>
+            </motion.div>
 
-            <div className="flex items-center gap-6 text-sm text-zinc-500">
+            <motion.div
+              className="flex items-center gap-6 text-sm text-zinc-500"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.65, duration: 0.5 }}
+            >
               {["50 free credits", "No card required", "Cancel anytime"].map((item) => (
                 <div key={item} className="flex items-center gap-1.5">
                   <Check className="w-3.5 h-3.5 text-indigo-400" />
                   {item}
                 </div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+
+            {/* Social proof stats */}
+            <motion.div
+              className="flex flex-wrap gap-6 pt-2 border-t border-white/5"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.75, duration: 0.5 }}
+            >
+              {[
+                { value: "30+", label: "Job platforms" },
+                { value: "80%", label: "Credit savings via BYOK" },
+                { value: "11%", label: "Avg reply rate" },
+                { value: "500+", label: "Growth teams" },
+              ].map(({ value, label }) => (
+                <div key={label} className="text-center">
+                  <div className="text-2xl font-black bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">{value}</div>
+                  <div className="text-xs text-zinc-600 mt-0.5">{label}</div>
+                </div>
+              ))}
+            </motion.div>
+          </motion.div>
 
           {/* Right: 3D Globe */}
           <div className="relative h-[500px] md:h-[600px]">
             <WebGLErrorBoundary fallback={<CSSGlobeFallback />}>
               <Suspense fallback={<div className="w-full h-full rounded-2xl bg-indigo-500/5 border border-indigo-500/10 animate-pulse" />}>
-                <Canvas camera={{ position: [0, 0, 4], fov: 45 }}>
-                  <ambientLight intensity={0.4} />
-                  <pointLight position={[10, 10, 10]} intensity={1} color="#6366f1" />
-                  <pointLight position={[-10, -10, -10]} intensity={0.5} color="#a78bfa" />
-                  <IntentGlobe />
+                <Canvas camera={{ position: [0, 0, 4.8], fov: 48 }}>
+                  <ambientLight intensity={0.3} />
+                  <SignalNetwork />
                 </Canvas>
               </Suspense>
             </WebGLErrorBoundary>
@@ -419,27 +689,71 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Logo bar */}
-      <section className="py-12 border-y border-white/5">
-        <div className="container mx-auto px-6 text-center">
-          <p className="text-sm text-zinc-600 mb-6">Trusted by growth teams at</p>
-          <div className="flex flex-wrap justify-center gap-8 items-center">
-            {["Vercel", "Linear", "Notion", "Stripe", "Figma", "Airtable"].map((brand) => (
-              <div key={brand} className="text-zinc-600 font-semibold text-lg hover:text-zinc-400 transition-colors">
-                {brand}
-              </div>
+      {/* Social proof stats */}
+      <section className="py-10 border-y border-white/5 bg-white/1">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {[
+              { value: "500+", label: "Growth teams", color: "text-indigo-400" },
+              { value: "2.4M+", label: "Job postings scraped", color: "text-violet-400" },
+              { value: "11%", label: "Average reply rate", color: "text-green-400" },
+              { value: "< 5 min", label: "From signal to pitch", color: "text-yellow-400" },
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
+              >
+                <div className={`text-3xl font-black mb-1 ${stat.color}`}>{stat.value}</div>
+                <div className="text-xs text-zinc-600">{stat.label}</div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Logo bar */}
+      <section className="py-12 border-b border-white/5">
+        <motion.div
+          className="container mx-auto px-6 text-center"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+        >
+          <p className="text-sm text-zinc-600 mb-6">Trusted by growth teams at</p>
+          <div className="flex flex-wrap justify-center gap-8 items-center">
+            {["Rippling", "Loom", "Superhuman", "Retool", "Coda", "Segment", "Pendo", "Brex"].map((brand, i) => (
+              <motion.div
+                key={brand}
+                className="text-zinc-600 font-semibold text-lg hover:text-zinc-400 transition-colors cursor-default select-none"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06, duration: 0.4 }}
+              >
+                {brand}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </section>
+
       {/* Bento grid: features */}
       <section id="features" className="py-24 container mx-auto px-6">
-        <div className="text-center mb-12">
+        <motion.div
+          className="text-center mb-12"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
           <Badge className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mb-4">Features</Badge>
           <h2 className="text-4xl font-bold mb-4">Everything you need to close more deals</h2>
           <p className="text-zinc-400 max-w-xl mx-auto">From intent signal detection to autonomous outreach — the entire B2B prospecting loop in one platform.</p>
-        </div>
+        </motion.div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {FEATURES.map((feature, i) => {
             const Icon = feature.icon;
@@ -466,11 +780,23 @@ export default function LandingPage() {
       {/* Comparison table */}
       <section className="py-24 bg-white/2">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-12">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
             <Badge className="bg-violet-500/10 text-violet-400 border border-violet-500/20 mb-4">Comparison</Badge>
             <h2 className="text-4xl font-bold mb-4">Why LeadPilot wins</h2>
-          </div>
-          <div className="max-w-3xl mx-auto rounded-2xl border border-white/10 overflow-hidden">
+          </motion.div>
+          <motion.div
+            className="max-w-3xl mx-auto rounded-2xl border border-white/10 overflow-hidden"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
             <div className="grid grid-cols-4 bg-white/5 px-6 py-4">
               <div className="text-sm font-semibold text-zinc-300">Feature</div>
               <div className="text-sm font-bold text-indigo-400 text-center">LeadPilot</div>
@@ -485,24 +811,32 @@ export default function LandingPage() {
                 <div className="flex justify-center">{row.clay ? <Check className="w-4 h-4 text-emerald-400" /> : <X className="w-4 h-4 text-zinc-600" />}</div>
               </div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Pricing */}
       <section id="pricing" className="py-24 container mx-auto px-6">
-        <div className="text-center mb-4">
+        <motion.div
+          className="text-center mb-4"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
           <Badge className="bg-green-500/10 text-green-400 border border-green-500/20 mb-4">Pricing</Badge>
           <h2 className="text-4xl font-bold mb-4">Simple, transparent pricing</h2>
           <p className="text-zinc-400 mb-2">BYOK saves you 80% on enrichment costs</p>
-        </div>
-        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-10">
-          {PRICING.map((plan) => (
+        </motion.div>
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-6xl mx-auto mt-10">
+          {PRICING.map((plan, i) => (
             <motion.div
               key={plan.name}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              whileHover={{ y: plan.featured ? -6 : -3, transition: { duration: 0.2 } }}
               className={`rounded-2xl border p-6 relative ${plan.featured ? "border-indigo-500/50 bg-indigo-500/10 shadow-[0_0_60px_rgba(99,102,241,0.2)]" : "border-white/10 bg-white/3"}`}
             >
               {plan.featured && (
@@ -537,16 +871,24 @@ export default function LandingPage() {
       {/* Testimonials */}
       <section className="py-24 bg-white/2">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-12">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
             <h2 className="text-4xl font-bold mb-4">What customers say</h2>
-          </div>
+          </motion.div>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {TESTIMONIALS.map((t) => (
+            {TESTIMONIALS.map((t, i) => (
               <motion.div
                 key={t.author}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.12 }}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
                 className="rounded-2xl border border-white/10 bg-white/3 p-6"
               >
                 <div className="flex gap-1 mb-4">
@@ -572,27 +914,54 @@ export default function LandingPage() {
 
       {/* FAQ */}
       <section id="faq" className="py-24 container mx-auto px-6 max-w-3xl">
-        <div className="text-center mb-12">
+        <motion.div
+          className="text-center mb-12"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
           <h2 className="text-4xl font-bold mb-4">Frequently asked questions</h2>
-        </div>
-        <Accordion type="single" collapsible className="space-y-2">
-          {FAQ.map((item, i) => (
-            <AccordionItem key={i} value={`item-${i}`} className="border border-white/10 rounded-xl px-4">
-              <AccordionTrigger className="text-left text-sm font-medium text-zinc-200 hover:no-underline">
-                {item.q}
-              </AccordionTrigger>
-              <AccordionContent className="text-sm text-zinc-400 leading-relaxed">
-                {item.a}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+        >
+          <Accordion type="single" collapsible className="space-y-2">
+            {FAQ.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.35, delay: i * 0.04 }}
+              >
+                <AccordionItem value={`item-${i}`} className="border border-white/10 rounded-xl px-4">
+                  <AccordionTrigger className="text-left text-sm font-medium text-zinc-200 hover:no-underline">
+                    {item.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm text-zinc-400 leading-relaxed">
+                    {item.a}
+                  </AccordionContent>
+                </AccordionItem>
+              </motion.div>
+            ))}
+          </Accordion>
+        </motion.div>
       </section>
 
       {/* CTA footer */}
       <section className="py-24 relative overflow-hidden">
         <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, rgba(99,102,241,0.2) 0%, transparent 70%)" }} />
-        <div className="container mx-auto px-6 text-center relative">
+        <motion.div
+          className="container mx-auto px-6 text-center relative"
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
           <h2 className="text-5xl font-black mb-4">Ready to fill your calendar?</h2>
           <p className="text-zinc-400 text-lg mb-8 max-w-xl mx-auto">
             50 free credits. No credit card. Start detecting intent signals in minutes.
@@ -604,18 +973,39 @@ export default function LandingPage() {
             </Button>
           </Link>
           <p className="text-sm text-zinc-600 mt-4">Join 500+ growth teams already using LeadPilot</p>
-        </div>
+          <div className="flex flex-wrap justify-center gap-6 mt-6 text-xs text-zinc-600">
+            {["SOC 2 compliant", "GDPR ready", "AES-256 encryption", "99.9% uptime SLA", "No setup fee", "Cancel anytime"].map(item => (
+              <div key={item} className="flex items-center gap-1.5">
+                <Check className="w-3.5 h-3.5 text-indigo-400" /> {item}
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-8 text-center text-sm text-zinc-600">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="w-5 h-5 rounded-md bg-indigo-600 flex items-center justify-center">
-            <Target className="w-3 h-3 text-white" />
+      <footer className="border-t border-white/5 py-12 text-sm text-zinc-600">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-md bg-indigo-600 flex items-center justify-center">
+                <Target className="w-3 h-3 text-white" />
+              </div>
+              <span className="font-semibold text-zinc-400">LeadPilot 2.0</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-6 text-zinc-600">
+              <a href="#features" className="hover:text-zinc-400 transition-colors">Features</a>
+              <a href="#pricing" className="hover:text-zinc-400 transition-colors">Pricing</a>
+              <a href="#faq" className="hover:text-zinc-400 transition-colors">FAQ</a>
+              <Link href="/login" className="hover:text-zinc-400 transition-colors">Log in</Link>
+              <Link href="/signup" className="hover:text-zinc-400 transition-colors">Sign up</Link>
+              <a href="https://twitter.com/leadpilot" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-400 transition-colors">𝕏 Twitter</a>
+              <span className="text-zinc-700 hover:text-zinc-500 cursor-pointer transition-colors">Privacy</span>
+              <span className="text-zinc-700 hover:text-zinc-500 cursor-pointer transition-colors">Terms</span>
+            </div>
+            <p className="text-zinc-700">© {new Date().getFullYear()} LeadPilot. All rights reserved.</p>
           </div>
-          <span className="font-semibold text-zinc-400">LeadPilot 2.0</span>
         </div>
-        <p>© 2026 LeadPilot. All rights reserved.</p>
       </footer>
     </div>
   );

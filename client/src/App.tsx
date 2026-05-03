@@ -1,6 +1,7 @@
 import { Switch, Route, Redirect } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toast";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import LandingPage from "@/pages/Landing";
 import LoginPage from "@/pages/Login";
 import SignupPage from "@/pages/Signup";
@@ -20,7 +21,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) return <AppLoading />;
   if (!isAuthenticated) return <Redirect to="/login" />;
-  return <Component />;
+  return <ErrorBoundary><Component /></ErrorBoundary>;
 }
 
 function AppLoading() {
