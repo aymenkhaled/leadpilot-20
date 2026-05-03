@@ -201,7 +201,7 @@ router.get("/top-companies", async (req: AuthRequest, res) => {
       contactCount: sql<number>`count(distinct ${contacts.id})`,
     })
       .from(jobs)
-      .leftJoin(contacts, and(eq(contacts.workspaceId, wid), eq(contacts.companyName, jobs.companyName)))
+      .leftJoin(contacts, and(eq(contacts.workspaceId, wid), eq(contacts.jobId, jobs.id)))
       .where(and(eq(jobs.workspaceId, wid), sql`${jobs.companyName} is not null`))
       .groupBy(jobs.companyName, jobs.companyDomain)
       .orderBy(sql`count(distinct ${jobs.id}) desc`)

@@ -164,13 +164,13 @@ export default function CompaniesPage() {
                         </a>
                       )}
                       {company.location && <span className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" /> {company.location}</span>}
-                      {company.employees && <span className="text-xs text-muted-foreground flex items-center gap-1"><Users className="w-3 h-3" /> {Number(company.employees).toLocaleString()} employees</span>}
+                      {company.foundedYear && <span className="text-xs text-muted-foreground">est. {company.foundedYear}</span>}
                     </div>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {company.industry && <Badge variant="secondary" className="text-xs">{company.industry}</Badge>}
                       {company.size && <Badge variant="outline" className="text-xs"><Users className="w-3 h-3 mr-1" />{company.size}</Badge>}
                       {company.fundingStage && <Badge variant="indigo" className="text-xs">{company.fundingStage}</Badge>}
-                      {company.revenue && <Badge variant="outline" className="text-xs text-green-400 border-green-500/20">{company.revenue}</Badge>}
+                      {company.fundingTotal && <Badge variant="outline" className="text-xs text-green-400 border-green-500/20">${Number(company.fundingTotal).toLocaleString()}</Badge>}
                       {Number(company.jobCount) > 0 && (
                         <Badge variant="outline" className="text-xs text-indigo-400 border-indigo-500/30">
                           <Briefcase className="w-3 h-3 mr-1 text-indigo-400" />{company.jobCount} job{Number(company.jobCount) !== 1 ? "s" : ""}

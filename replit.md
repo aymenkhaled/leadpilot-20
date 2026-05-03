@@ -76,6 +76,13 @@ Full-stack B2B prospecting SaaS platform that turns job postings into enriched, 
 12. **Billing**: Stripe checkout + customer portal + webhook handler (checkout.session.completed, customer.subscription.deleted)
 13. **Keyboard shortcuts**: `?` for help, `S` scrape, `C` compose, `/` search focus, `G+J/D/S/A/C/O` navigation (vim-style)
 
+## Bug Fixes & Audit (Session 16)
+- **`server/routes/companies.ts`**: Removed non-existent `employees` and `revenue` columns from SELECT — replaced with actual schema fields `fundingTotal`, `foundedYear`, `tags`
+- **`server/routes/analytics.ts`**: Fixed top-companies query — contacts join was on `contacts.companyName` (doesn't exist); fixed to `eq(contacts.jobId, jobs.id)`
+- **`client/src/pages/app/Companies.tsx`**: Removed client-side references to `company.employees` and `company.revenue`; replaced with `company.foundedYear` (est. year) and `company.fundingTotal` (formatted dollar amount)
+- **`client/src/pages/app/Admin.tsx`**: Full premium redesign — 8 stat cards with gradient-top-border variants, hover-glow, icon containers; search-filtered workspace/user tables with group-hover actions (Coins grant, Pencil edit, ShieldCheck/ShieldOff promote); `EditWorkspaceDialog` for credits + plan editing; admin-only guard redirect
+- **`client/src/pages/app/JobDetail.tsx`**: Full premium redesign — gradient-top-border card variants on all sidebar + main cards; `JobNotesCard` with auto-save-on-blur; enrichment status checklist; opportunity score visual bar (color-coded green/yellow/red); company sidebar with favicon; improved contacts panel with confidence badges; outreach history with compose link; copy-job-link button
+
 ## UI Redesign (Session 15 — Dark Premium SaaS)
 - **Landing page full redesign**: Announcement bar (emerald pulse dot), sticky nav with gradient underline, gradient logo icon, animated gradient headline, "How it works" 3-step section, CSS marquee logo ticker, stat cards with colored glassmorphism backgrounds, comparison table with gradient header row, `gradient-border-wrap` on featured pricing card, testimonials marquee with duplicate rows, FAQ accordion with refined borders, dramatic CTA with animated pulse rings, improved footer layout. All 3D SignalNetwork code preserved intact.
 - **AppLayout sidebar redesign**: `bg-[#0d0d12]` background, gradient logo icon, active nav left-bar accent (`absolute w-0.5 h-5 bg-gradient-to-b from-indigo-400 to-violet-500`), shimmer on credits widget, plan-specific colors (free/pro/agency/scale), mobile overlay sidebar
