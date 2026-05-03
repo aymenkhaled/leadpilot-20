@@ -71,6 +71,24 @@ Full-stack B2B prospecting SaaS platform that turns job postings into enriched, 
 11. **Analytics**: Dashboard with funnel, charts, credit tracking
 12. **Billing**: Stripe checkout + customer portal
 
+## Bugs Fixed (T008 Polish Pass)
+1. **Critical route-ordering bug in `server/routes/jobs.ts`**: `GET /stats/overview` and `POST /bulk-delete` were defined AFTER `GET /:id`, causing Express to capture "stats" as a job ID and return 404. Both static routes moved before `/:id`.
+2. **`bufferAttribute` duplicate props in `Landing.tsx`**: Had both `args={[positions, 3]}` AND `count/array/itemSize` props simultaneously — removed the redundant `args` prop to use the explicit props-only form expected by React-Three-Fiber.
+
+## Tested Endpoints (all 200 ✅)
+- Auth: login, signup, /me, logout, switch-workspace
+- Jobs: list, stats/overview, get-by-id, create, patch, delete, bulk-delete
+- Companies: list, get-by-id, patch
+- Contacts: list, get-by-id, patch, mark-champion
+- Signals: list, stats, create, act
+- Outreach: list, stats, create, patch, generate
+- Analytics: dashboard, jobs-over-time
+- Settings: get/patch settings, api-keys CRUD + test, waterfall CRUD
+- Agent: list runs, create run, get run, cancel run
+- Scrape: platforms, post scrape, list runs, get run
+- Billing: plans, create-checkout, portal
+- Admin: stats, workspaces, users, patch credits/plan
+
 ## Lessons from V1 Applied
 - A-Leads: never filter by job_title, fetch ≥10 contacts, domain-only search
 - Domain resolver: blacklists 25+ job aggregator domains

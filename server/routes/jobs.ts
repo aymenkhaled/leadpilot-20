@@ -17,6 +17,42 @@ const listQuerySchema = z.object({
   sort: z.enum(["newest", "oldest", "score", "budget"]).default("newest"),
 });
 
+// GET /api/jobs/stats/overview  ← MUST be before /:id to avoid param capture
+router.get("/stats/overview", async (req: AuthRequest, res) => {
+  try {
+    const wid = req.user!.workspaceId;
+    const [total, byStatus, byPlatform] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(jobs).where(eq(jobs.workspaceId, wid)),
+      db.select({ status: jobs.status, count: sql<number>`count(*)` })
+        .from(jobs).where(eq(jobs.workspaceId, wid)).groupBy(jobs.status),
+      db.select({ platform: jobs.platform, count: sql<number>`count(*)` })
+        .from(jobs).where(eq(jobs.workspaceId, wid)).groupBy(jobs.platform)
+        .limit(10),
+    ]);
+
+    res.json({
+      total: Number(total[0]?.count ?? 0),
+      byStatus: byStatus.reduce((acc, r) => ({ ...acc, [r.status]: Number(r.count) }), {}),
+      byPlatform: byPlatform.map(r => ({ platform: r.platform, count: Number(r.count) })),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/jobs/bulk-delete  ← MUST be before /:id to avoid param capture
+router.post("/bulk-delete", async (req: AuthRequest, res) => {
+  try {
+    const { ids } = z.object({ ids: z.array(z.string()) }).parse(req.body);
+    await db.delete(jobs).where(
+      and(inArray(jobs.id, ids), eq(jobs.workspaceId, req.user!.workspaceId))
+    );
+    res.json({ success: true, deleted: ids.length });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/jobs
 router.get("/", async (req: AuthRequest, res) => {
   try {
@@ -144,42 +180,6 @@ router.delete("/:id", async (req: AuthRequest, res) => {
 
     await db.delete(jobs).where(eq(jobs.id, req.params.id));
     res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// POST /api/jobs/bulk-delete
-router.post("/bulk-delete", async (req: AuthRequest, res) => {
-  try {
-    const { ids } = z.object({ ids: z.array(z.string()) }).parse(req.body);
-    await db.delete(jobs).where(
-      and(inArray(jobs.id, ids), eq(jobs.workspaceId, req.user!.workspaceId))
-    );
-    res.json({ success: true, deleted: ids.length });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// GET /api/jobs/stats/overview
-router.get("/stats/overview", async (req: AuthRequest, res) => {
-  try {
-    const wid = req.user!.workspaceId;
-    const [total, byStatus, byPlatform] = await Promise.all([
-      db.select({ count: sql<number>`count(*)` }).from(jobs).where(eq(jobs.workspaceId, wid)),
-      db.select({ status: jobs.status, count: sql<number>`count(*)` })
-        .from(jobs).where(eq(jobs.workspaceId, wid)).groupBy(jobs.status),
-      db.select({ platform: jobs.platform, count: sql<number>`count(*)` })
-        .from(jobs).where(eq(jobs.workspaceId, wid)).groupBy(jobs.platform)
-        .limit(10),
-    ]);
-
-    res.json({
-      total: Number(total[0]?.count ?? 0),
-      byStatus: byStatus.reduce((acc, r) => ({ ...acc, [r.status]: Number(r.count) }), {}),
-      byPlatform: byPlatform.map(r => ({ platform: r.platform, count: Number(r.count) })),
-    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
