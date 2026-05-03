@@ -16,6 +16,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         indigo: "bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 shadow-indigo-500/25",
         "indigo-outline": "border border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10",
+        gradient: "bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-sm shadow-indigo-500/25 transition-all",
       },
       size: {
         default: "h-9 px-4 py-2",

@@ -68,10 +68,13 @@ export default function ContactsPage() {
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Users className="w-6 h-6 text-violet-400" /> Contacts
+          <h1 className="text-2xl font-bold flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+              <Users className="w-4 h-4 text-violet-400" />
+            </div>
+            Contacts
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {pagination.total} contacts
             {data?.verified > 0 && <> · <span className="text-green-400">{data.verified} verified</span></>}
             {championCount > 0 && ` · ${championCount} champion${championCount !== 1 ? "s" : ""} on page`}
@@ -143,9 +146,11 @@ export default function ContactsPage() {
           {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
         </div>
       ) : contacts.length === 0 ? (
-        <div className="text-center py-16 border border-dashed border-border rounded-xl">
-          <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
-          <h3 className="font-semibold mb-1">
+        <div className="text-center py-16 border border-dashed border-border/40 rounded-2xl bg-card/20">
+          <div className="w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mx-auto mb-4">
+            <Users className="w-7 h-7 text-violet-400/50" />
+          </div>
+          <h3 className="font-semibold mb-1.5">
             {hasFilters ? "No matching contacts" : "No contacts yet"}
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -160,7 +165,7 @@ export default function ContactsPage() {
       ) : (
         <div className="space-y-2">
           {contacts.map((contact: any) => (
-            <Card key={contact.id} className="bg-card/50 border-border/50 hover:border-indigo-500/20 transition-colors">
+            <Card key={contact.id} className="gradient-top-border-violet bg-card/50 border-border/50 hover-glow transition-all">
               <CardContent className="p-4">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-10 w-10">

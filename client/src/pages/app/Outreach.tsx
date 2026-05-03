@@ -282,10 +282,13 @@ export default function OutreachPage() {
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Mail className="w-6 h-6 text-green-400" /> Outreach
+          <h1 className="text-2xl font-bold flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+              <Mail className="w-4 h-4 text-green-400" />
+            </div>
+            Outreach
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {pagination.total} total emails
             {stats?.openRate > 0 && <span className="ml-2 text-indigo-400 font-medium">{stats.openRate}% open</span>}
             {stats?.replyRate > 0 && <span className="ml-2 text-green-400 font-medium">{stats.replyRate}% reply</span>}
@@ -341,7 +344,7 @@ export default function OutreachPage() {
           return (
             <Card
               key={key}
-              className={`bg-card/50 border-border/50 cursor-pointer hover:border-indigo-500/30 transition-colors ${statusFilter === key ? "border-indigo-500/50" : ""}`}
+              className={`gradient-top-border-green bg-card/50 border-border/50 cursor-pointer hover-glow transition-all ${statusFilter === key ? "border-green-500/30 bg-green-500/5" : ""}`}
               onClick={() => setStatusFilter(statusFilter === key ? "all" : key)}
             >
               <div className="p-3 text-center">
@@ -393,9 +396,11 @@ export default function OutreachPage() {
           {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
         </div>
       ) : outreachItems.length === 0 ? (
-        <div className="text-center py-16 border border-dashed border-border rounded-xl">
-          <Mail className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
-          <h3 className="font-semibold mb-1">
+        <div className="text-center py-16 border border-dashed border-border/40 rounded-2xl bg-card/20">
+          <div className="w-14 h-14 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+            <Mail className="w-7 h-7 text-green-400/50" />
+          </div>
+          <h3 className="font-semibold mb-1.5">
             {search || statusFilter !== "all" ? "No matching outreach" : "No outreach yet"}
           </h3>
           <p className="text-sm text-muted-foreground mb-4">

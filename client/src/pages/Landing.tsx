@@ -550,28 +550,46 @@ export default function LandingPage() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const heroY = useTransform(scrollYProgress, [0, 0.5], [0, -80]);
 
+  const BRANDS = ["Rippling", "Loom", "Superhuman", "Retool", "Coda", "Segment", "Pendo", "Brex", "Rippling", "Loom", "Superhuman", "Retool", "Coda", "Segment", "Pendo", "Brex"];
+
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white overflow-x-hidden">
+
+      {/* Announcement bar */}
+      <div className="relative bg-gradient-to-r from-indigo-600/20 via-violet-600/15 to-indigo-600/20 border-b border-indigo-500/15 py-2 px-4 text-center">
+        <div className="flex items-center justify-center gap-2 text-xs text-zinc-300">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span>New: Champion Tracking now available — get alerted when your contacts change jobs</span>
+          <a href="#features" className="text-indigo-400 hover:text-indigo-300 font-medium ml-1 transition-colors">Learn more →</a>
+        </div>
+      </div>
+
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5">
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-3.5 bg-[#0a0a0f]/90 backdrop-blur-xl border-b border-white/[0.06]">
+        {/* Bottom gradient line */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/25 to-transparent" />
+
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm shadow-indigo-500/30">
             <Target className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold">LeadPilot</span>
-          <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full font-medium">2.0</span>
+          <span className="font-bold bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">LeadPilot</span>
+          <span className="text-[10px] bg-indigo-500/15 text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 rounded-full font-medium">2.0</span>
         </div>
-        <div className="hidden md:flex items-center gap-6 text-sm text-zinc-400">
+
+        <div className="hidden md:flex items-center gap-6 text-sm text-zinc-500">
+          <a href="#how-it-works" className="hover:text-white transition-colors">How it works</a>
           <a href="#features" className="hover:text-white transition-colors">Features</a>
           <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
         </div>
+
         <div className="flex items-center gap-3">
           <Link href="/login">
-            <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white">Log in</Button>
+            <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white transition-colors">Log in</Button>
           </Link>
           <Link href="/signup">
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white">
+            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm shadow-indigo-500/30 transition-all">
               Start free <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           </Link>
@@ -579,34 +597,40 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center pt-16">
+      <section ref={heroRef} className="relative min-h-screen flex items-center">
         {/* Background grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:60px_60px]" />
-        <div className="absolute inset-0 bg-radial-gradient" style={{ background: "radial-gradient(ellipse at 60% 50%, rgba(99,102,241,0.15) 0%, transparent 60%)" }} />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff04_1px,transparent_1px),linear-gradient(to_bottom,#ffffff04_1px,transparent_1px)] bg-[size:60px_60px]" />
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 60% 50%, rgba(99,102,241,0.14) 0%, transparent 60%)" }} />
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0a0a0f] to-transparent" />
 
         <div className="container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
           {/* Left: Text */}
           <motion.div
-            className="space-y-6"
+            className="space-y-7"
             initial={{ opacity: 0, x: -32 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
           >
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}>
-              <Badge className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs px-3 py-1">
-                <Zap className="w-3 h-3 mr-1" /> Intent-driven B2B prospecting
-              </Badge>
+              <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/25 text-indigo-300 text-xs px-3 py-1.5 rounded-full font-medium">
+                <Zap className="w-3 h-3 text-indigo-400" />
+                Intent-driven B2B prospecting
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-1" />
+              </div>
             </motion.div>
 
             <motion.h1
-              className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight"
+              className="text-5xl md:text-[3.75rem] font-black leading-[1.04] tracking-tight"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
             >
               Turn every new{" "}
-              <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-                job posting
+              <span className="relative">
+                <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-indigo-400 bg-clip-text text-transparent bg-[length:200%] animate-gradient-x">
+                  job posting
+                </span>
               </span>{" "}
               into a booked meeting
             </motion.h1>
@@ -628,54 +652,61 @@ export default function LandingPage() {
               transition={{ delay: 0.5, duration: 0.5 }}
             >
               <Link href="/signup">
-                <Button size="lg" className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/25 px-8">
-                  Start free — no credit card
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+                <div className="relative inline-flex">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl blur opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <Button size="lg" className="relative bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-500/30 px-8 transition-all hover:shadow-indigo-500/50 rounded-xl">
+                    Start free — no credit card
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
               </Link>
-              <Button size="lg" variant="outline" className="border-white/10 text-zinc-300 hover:bg-white/5">
-                <Play className="w-4 h-4" />
+              <Button size="lg" variant="outline" className="border-white/10 text-zinc-300 hover:bg-white/5 hover:border-white/20 transition-all rounded-xl">
+                <Play className="w-4 h-4 fill-current" />
                 Watch demo
               </Button>
             </motion.div>
 
             <motion.div
-              className="flex items-center gap-6 text-sm text-zinc-500"
+              className="flex flex-wrap items-center gap-5 text-sm text-zinc-500"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.65, duration: 0.5 }}
             >
               {["50 free credits", "No card required", "Cancel anytime"].map((item) => (
                 <div key={item} className="flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-indigo-400" />
+                  <div className="w-4 h-4 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5 text-indigo-400" />
+                  </div>
                   {item}
                 </div>
               ))}
             </motion.div>
 
-            {/* Social proof stats */}
+            {/* Mini stat bar */}
             <motion.div
-              className="flex flex-wrap gap-6 pt-2 border-t border-white/5"
+              className="grid grid-cols-4 gap-3 pt-3 border-t border-white/[0.06]"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.75, duration: 0.5 }}
             >
               {[
-                { value: "30+", label: "Job platforms" },
-                { value: "80%", label: "Credit savings via BYOK" },
-                { value: "11%", label: "Avg reply rate" },
-                { value: "500+", label: "Growth teams" },
-              ].map(({ value, label }) => (
+                { value: "30+", label: "Job platforms", color: "from-indigo-400 to-violet-400" },
+                { value: "80%", label: "BYOK savings", color: "from-green-400 to-emerald-400" },
+                { value: "11%", label: "Reply rate", color: "from-yellow-400 to-orange-400" },
+                { value: "500+", label: "Teams using", color: "from-violet-400 to-pink-400" },
+              ].map(({ value, label, color }) => (
                 <div key={label} className="text-center">
-                  <div className="text-2xl font-black bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">{value}</div>
-                  <div className="text-xs text-zinc-600 mt-0.5">{label}</div>
+                  <div className={`text-xl font-black bg-gradient-to-r ${color} bg-clip-text text-transparent tabular-nums`}>{value}</div>
+                  <div className="text-[10px] text-zinc-600 mt-0.5 leading-tight">{label}</div>
                 </div>
               ))}
             </motion.div>
           </motion.div>
 
           {/* Right: 3D Globe */}
-          <div className="relative h-[500px] md:h-[600px]">
+          <div className="relative h-[480px] md:h-[580px]">
+            {/* Glow ring behind canvas */}
+            <div className="absolute inset-8 rounded-full bg-indigo-500/5 blur-3xl" />
             <WebGLErrorBoundary fallback={<CSSGlobeFallback />}>
               <Suspense fallback={<div className="w-full h-full rounded-2xl bg-indigo-500/5 border border-indigo-500/10 animate-pulse" />}>
                 <Canvas camera={{ position: [0, 0, 4.8], fov: 48 }}>
@@ -689,59 +720,129 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Social proof stats */}
-      <section className="py-10 border-y border-white/5 bg-white/1">
+      {/* Stats bar */}
+      <section className="py-12 border-y border-white/[0.05]" style={{ background: "linear-gradient(to bottom, rgba(10,10,15,0.8), rgba(10,10,15,1))" }}>
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { value: "500+", label: "Growth teams", color: "text-indigo-400" },
-              { value: "2.4M+", label: "Job postings scraped", color: "text-violet-400" },
-              { value: "11%", label: "Average reply rate", color: "text-green-400" },
-              { value: "< 5 min", label: "From signal to pitch", color: "text-yellow-400" },
+              { value: "500+", label: "Growth teams", color: "from-indigo-400 to-violet-400", bg: "bg-indigo-500/10 border-indigo-500/15" },
+              { value: "2.4M+", label: "Job postings scraped", color: "from-violet-400 to-purple-400", bg: "bg-violet-500/10 border-violet-500/15" },
+              { value: "11%", label: "Average reply rate", color: "from-green-400 to-emerald-400", bg: "bg-green-500/10 border-green-500/15" },
+              { value: "< 5 min", label: "From signal to pitch", color: "from-yellow-400 to-orange-400", bg: "bg-yellow-500/10 border-yellow-500/15" },
             ].map((stat, i) => (
               <motion.div
                 key={stat.label}
-                initial={{ opacity: 0, y: 16 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.08 }}
+                className={`rounded-xl border ${stat.bg} p-4 text-center backdrop-blur-sm`}
               >
-                <div className={`text-3xl font-black mb-1 ${stat.color}`}>{stat.value}</div>
-                <div className="text-xs text-zinc-600">{stat.label}</div>
+                <div className={`text-3xl font-black mb-1.5 bg-gradient-to-r ${stat.color} bg-clip-text text-transparent tabular-nums`}>
+                  {stat.value}
+                </div>
+                <div className="text-xs text-zinc-500">{stat.label}</div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Logo bar */}
-      <section className="py-12 border-b border-white/5">
-        <motion.div
-          className="container mx-auto px-6 text-center"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-        >
-          <p className="text-sm text-zinc-600 mb-6">Trusted by growth teams at</p>
-          <div className="flex flex-wrap justify-center gap-8 items-center">
-            {["Rippling", "Loom", "Superhuman", "Retool", "Coda", "Segment", "Pendo", "Brex"].map((brand, i) => (
-              <motion.div
-                key={brand}
-                className="text-zinc-600 font-semibold text-lg hover:text-zinc-400 transition-colors cursor-default select-none"
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06, duration: 0.4 }}
-              >
+      {/* Marquee logo bar */}
+      <section className="py-10 border-b border-white/[0.05] overflow-hidden">
+        <p className="text-xs text-zinc-600 text-center mb-6 uppercase tracking-widest font-medium">Trusted by growth teams at</p>
+        <div className="relative overflow-hidden">
+          {/* Fade edges */}
+          <div className="absolute left-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-r from-[#0a0a0f] to-transparent pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none" />
+          <div className="animate-marquee">
+            {BRANDS.map((brand, i) => (
+              <div key={`brand-${i}`} className="shrink-0 mx-8 text-zinc-600 font-semibold text-base hover:text-zinc-400 transition-colors cursor-default select-none">
                 {brand}
-              </motion.div>
+              </div>
             ))}
           </div>
-        </motion.div>
+        </div>
       </section>
 
-      {/* Bento grid: features */}
+      {/* How it works */}
+      <section id="how-it-works" className="py-24 container mx-auto px-6">
+        <motion.div
+          className="text-center mb-14"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs px-3 py-1.5 rounded-full font-medium mb-5">
+            How it works
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
+            From job post to <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">booked meeting</span>
+          </h2>
+          <p className="text-zinc-400 max-w-xl mx-auto">Three automated steps replace a full SDR workflow.</p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {[
+            {
+              step: "01",
+              icon: Globe,
+              title: "Detect intent signals",
+              desc: "LeadPilot continuously monitors 30+ job boards. When a company posts roles that signal buying intent — DevOps hires, security roles, new funding — we flag it instantly.",
+              color: "text-indigo-400",
+              bg: "bg-indigo-500/10 border-indigo-500/20",
+              glow: "group-hover:shadow-indigo-500/20",
+            },
+            {
+              step: "02",
+              icon: Users,
+              title: "Enrich decision-makers",
+              desc: "Waterfall enrichment finds the right contact using A-Leads → Prospeo → Apollo → Hunter. BYOK mode cuts costs by 80%. Verified email, LinkedIn, title — everything you need.",
+              color: "text-violet-400",
+              bg: "bg-violet-500/10 border-violet-500/20",
+              glow: "group-hover:shadow-violet-500/20",
+            },
+            {
+              step: "03",
+              icon: Bot,
+              title: "Agent SDR closes the loop",
+              desc: "The AI agent researches the account, drafts a hyper-personalized email referencing the trigger signal, waits for your approval or sends autonomously, then follows up.",
+              color: "text-green-400",
+              bg: "bg-green-500/10 border-green-500/20",
+              glow: "group-hover:shadow-green-500/20",
+            },
+          ].map((item, i) => {
+            const Icon = item.icon;
+            return (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.12 }}
+                className={`group relative rounded-2xl border ${item.bg} p-6 transition-all duration-300 hover-glow cursor-default`}
+              >
+                {/* Step number */}
+                <div className="text-[10px] font-black text-zinc-700 mb-4 tracking-widest">{item.step}</div>
+                <div className={`w-10 h-10 rounded-xl ${item.bg} border flex items-center justify-center mb-4`}>
+                  <Icon className={`w-5 h-5 ${item.color}`} />
+                </div>
+                <h3 className="text-base font-bold mb-2">{item.title}</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed">{item.desc}</p>
+                {/* Connector between steps */}
+                {i < 2 && (
+                  <div className="hidden md:block absolute top-8 -right-3 z-10">
+                    <ChevronRight className="w-5 h-5 text-zinc-700" />
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Features bento grid */}
       <section id="features" className="py-24 container mx-auto px-6">
         <motion.div
           className="text-center mb-12"
@@ -750,8 +851,10 @@ export default function LandingPage() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <Badge className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mb-4">Features</Badge>
-          <h2 className="text-4xl font-bold mb-4">Everything you need to close more deals</h2>
+          <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs px-3 py-1.5 rounded-full font-medium mb-5">
+            Features
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">Everything you need to close more</h2>
           <p className="text-zinc-400 max-w-xl mx-auto">From intent signal detection to autonomous outreach — the entire B2B prospecting loop in one platform.</p>
         </motion.div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -763,13 +866,17 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                whileHover={{ scale: 1.02, y: -2 }}
-                className={`${feature.size} relative rounded-2xl border ${feature.bg} p-6 cursor-default overflow-hidden backdrop-blur-sm`}
+                transition={{ duration: 0.5, delay: i * 0.08 }}
+                whileHover={{ y: -3, transition: { duration: 0.2 } }}
+                className={`${feature.size} relative rounded-2xl border ${feature.bg} p-6 cursor-default overflow-hidden backdrop-blur-sm hover-glow transition-all`}
               >
-                <div className="absolute inset-0 opacity-20" style={{ background: `radial-gradient(ellipse at top left, ${feature.color.replace("text-", "").replace("-400", "")} 0%, transparent 70%)` }} />
+                {/* Top gradient line */}
+                <div className="absolute top-0 left-0 right-0 h-px opacity-60" style={{
+                  background: `linear-gradient(to right, transparent, ${feature.color.includes("yellow") ? "#eab308" : feature.color.includes("indigo") ? "#6366f1" : feature.color.includes("violet") ? "#a78bfa" : feature.color.includes("cyan") ? "#06b6d4" : feature.color.includes("green") ? "#22c55e" : "#ec4899"}, transparent)`
+                }} />
+                <div className="absolute inset-0 opacity-10" style={{ background: `radial-gradient(ellipse at top left, currentColor 0%, transparent 65%)` }} />
                 <Icon className={`w-8 h-8 ${feature.color} mb-4`} />
-                <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
+                <h3 className="text-base font-bold mb-2">{feature.title}</h3>
                 <p className="text-sm text-zinc-400 leading-relaxed">{feature.description}</p>
               </motion.div>
             );
@@ -778,7 +885,7 @@ export default function LandingPage() {
       </section>
 
       {/* Comparison table */}
-      <section className="py-24 bg-white/2">
+      <section className="py-24" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.01), rgba(10,10,15,1))" }}>
         <div className="container mx-auto px-6">
           <motion.div
             className="text-center mb-12"
@@ -787,28 +894,46 @@ export default function LandingPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <Badge className="bg-violet-500/10 text-violet-400 border border-violet-500/20 mb-4">Comparison</Badge>
-            <h2 className="text-4xl font-bold mb-4">Why LeadPilot wins</h2>
+            <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs px-3 py-1.5 rounded-full font-medium mb-5">
+              Comparison
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">Why LeadPilot wins</h2>
+            <p className="text-zinc-400">Purpose-built for job-signal prospecting. Not a database. Not a spreadsheet.</p>
           </motion.div>
           <motion.div
-            className="max-w-3xl mx-auto rounded-2xl border border-white/10 overflow-hidden"
+            className="max-w-3xl mx-auto rounded-2xl border border-white/[0.08] overflow-hidden shadow-2xl shadow-black/50"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <div className="grid grid-cols-4 bg-white/5 px-6 py-4">
-              <div className="text-sm font-semibold text-zinc-300">Feature</div>
-              <div className="text-sm font-bold text-indigo-400 text-center">LeadPilot</div>
-              <div className="text-sm text-zinc-500 text-center">Apollo</div>
-              <div className="text-sm text-zinc-500 text-center">Clay</div>
+            {/* Gradient header */}
+            <div className="relative grid grid-cols-4 px-6 py-4 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-violet-500/8 to-indigo-500/5" />
+              <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
+              <div className="relative text-sm font-semibold text-zinc-300">Feature</div>
+              <div className="relative text-sm font-bold text-indigo-300 text-center">LeadPilot</div>
+              <div className="relative text-sm text-zinc-500 text-center">Apollo</div>
+              <div className="relative text-sm text-zinc-500 text-center">Clay</div>
             </div>
             {COMPARISON.map((row, i) => (
-              <div key={row.feature} className={`grid grid-cols-4 px-6 py-3 ${i % 2 === 0 ? "bg-white/2" : ""}`}>
-                <div className="text-sm text-zinc-300">{row.feature}</div>
-                <div className="flex justify-center">{row.us ? <Check className="w-4 h-4 text-emerald-400" /> : <X className="w-4 h-4 text-zinc-600" />}</div>
-                <div className="flex justify-center">{row.apollo ? <Check className="w-4 h-4 text-emerald-400" /> : <X className="w-4 h-4 text-zinc-600" />}</div>
-                <div className="flex justify-center">{row.clay ? <Check className="w-4 h-4 text-emerald-400" /> : <X className="w-4 h-4 text-zinc-600" />}</div>
+              <div key={row.feature} className={`grid grid-cols-4 px-6 py-3 border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? "bg-white/[0.015]" : ""}`}>
+                <div className="text-sm text-zinc-300 pr-2">{row.feature}</div>
+                <div className="flex justify-center">
+                  {row.us
+                    ? <div className="w-5 h-5 rounded-full bg-emerald-500/15 flex items-center justify-center"><Check className="w-3 h-3 text-emerald-400" /></div>
+                    : <X className="w-4 h-4 text-zinc-700" />}
+                </div>
+                <div className="flex justify-center">
+                  {row.apollo
+                    ? <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center"><Check className="w-3 h-3 text-emerald-500/70" /></div>
+                    : <X className="w-4 h-4 text-zinc-700" />}
+                </div>
+                <div className="flex justify-center">
+                  {row.clay
+                    ? <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center"><Check className="w-3 h-3 text-emerald-500/70" /></div>
+                    : <X className="w-4 h-4 text-zinc-700" />}
+                </div>
               </div>
             ))}
           </motion.div>
@@ -824,11 +949,13 @@ export default function LandingPage() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <Badge className="bg-green-500/10 text-green-400 border border-green-500/20 mb-4">Pricing</Badge>
-          <h2 className="text-4xl font-bold mb-4">Simple, transparent pricing</h2>
-          <p className="text-zinc-400 mb-2">BYOK saves you 80% on enrichment costs</p>
+          <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 text-green-400 text-xs px-3 py-1.5 rounded-full font-medium mb-5">
+            Pricing
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">Simple, transparent pricing</h2>
+          <p className="text-zinc-400 mb-2">BYOK saves you <span className="text-green-400 font-semibold">80%</span> on enrichment costs</p>
         </motion.div>
-        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-6xl mx-auto mt-10">
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5 max-w-6xl mx-auto mt-10">
           {PRICING.map((plan, i) => (
             <motion.div
               key={plan.name}
@@ -837,39 +964,71 @@ export default function LandingPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
               whileHover={{ y: plan.featured ? -6 : -3, transition: { duration: 0.2 } }}
-              className={`rounded-2xl border p-6 relative ${plan.featured ? "border-indigo-500/50 bg-indigo-500/10 shadow-[0_0_60px_rgba(99,102,241,0.2)]" : "border-white/10 bg-white/3"}`}
             >
-              {plan.featured && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-indigo-600 text-white text-xs px-3 py-1">Most Popular</Badge>
+              {plan.featured ? (
+                /* Gradient border wrap for featured */
+                <div className="gradient-border-wrap">
+                  <div className="relative rounded-2xl bg-[#0f0f18] p-6 h-full">
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
+                      <div className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg shadow-indigo-500/30">
+                        Most Popular
+                      </div>
+                    </div>
+                    <div className="mb-6 pt-2">
+                      <h3 className="text-lg font-bold mb-1">{plan.name}</h3>
+                      <div className="text-3xl font-black text-white">${plan.price}<span className="text-sm font-normal text-zinc-400">/mo</span></div>
+                      <div className="text-sm text-zinc-400 mt-1">{plan.credits.toLocaleString()} credits/month</div>
+                    </div>
+                    <ul className="space-y-2.5 mb-6">
+                      {plan.features.map((f) => (
+                        <li key={f} className="flex items-center gap-2 text-sm text-zinc-200">
+                          <div className="w-4 h-4 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0">
+                            <Check className="w-2.5 h-2.5 text-indigo-400" />
+                          </div>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link href={plan.href}>
+                      <Button className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-500/25 font-medium">
+                        {plan.cta}
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 h-full hover:border-white/15 transition-colors">
+                  <div className="mb-6">
+                    <h3 className="text-lg font-bold mb-1">{plan.name}</h3>
+                    <div className="text-3xl font-black">${plan.price}<span className="text-sm font-normal text-zinc-400">/mo</span></div>
+                    <div className="text-sm text-zinc-400 mt-1">{plan.credits.toLocaleString()} credits/month</div>
+                  </div>
+                  <ul className="space-y-2.5 mb-6">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-sm text-zinc-400">
+                        <Check className="w-3.5 h-3.5 text-zinc-600 shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href={plan.href}>
+                    <Button className="w-full border border-white/10 bg-transparent hover:bg-white/[0.05] text-zinc-300 hover:text-white transition-colors">
+                      {plan.cta}
+                    </Button>
+                  </Link>
                 </div>
               )}
-              <div className="mb-6">
-                <h3 className="text-lg font-bold mb-1">{plan.name}</h3>
-                <div className="text-3xl font-black">${plan.price}<span className="text-sm font-normal text-zinc-400">/mo</span></div>
-                <div className="text-sm text-zinc-400 mt-1">{plan.credits.toLocaleString()} credits/month</div>
-              </div>
-              <ul className="space-y-2 mb-6">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-zinc-300">
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link href={plan.href}>
-                <Button className={`w-full ${plan.featured ? "bg-indigo-600 hover:bg-indigo-500 text-white" : "border border-white/10 bg-transparent hover:bg-white/5 text-white"}`}>
-                  {plan.cta}
-                </Button>
-              </Link>
             </motion.div>
           ))}
         </div>
-        <p className="text-center text-sm text-zinc-500 mt-6">BYOK users save 80–90% on enrichment. <a href="#faq" className="text-indigo-400 hover:underline">Learn more →</a></p>
+        <p className="text-center text-sm text-zinc-600 mt-8">
+          BYOK users save 80–90% on enrichment.{" "}
+          <a href="#faq" className="text-indigo-400 hover:text-indigo-300 transition-colors">Learn more →</a>
+        </p>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-24 bg-white/2">
+      {/* Testimonials marquee */}
+      <section className="py-24 overflow-hidden" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.01), transparent)" }}>
         <div className="container mx-auto px-6">
           <motion.div
             className="text-center mb-12"
@@ -878,36 +1037,41 @@ export default function LandingPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-4xl font-bold mb-4">What customers say</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight">What customers say</h2>
+            <div className="flex justify-center gap-1 mt-3">
+              {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />)}
+              <span className="text-sm text-zinc-400 ml-2">4.9/5 from 200+ reviews</span>
+            </div>
           </motion.div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {TESTIMONIALS.map((t, i) => (
-              <motion.div
-                key={t.author}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.12 }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className="rounded-2xl border border-white/10 bg-white/3 p-6"
-              >
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <p className="text-sm text-zinc-300 leading-relaxed mb-4">"{t.quote}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-xs font-bold text-indigo-400">
-                    {t.avatar}
+
+          {/* Marquee testimonials */}
+          <div className="relative overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-r from-[#0a0a0f] to-transparent pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-24 z-10 bg-gradient-to-l from-[#0a0a0f] to-transparent pointer-events-none" />
+            <div className="animate-marquee gap-5">
+              {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
+                <div
+                  key={i}
+                  className="shrink-0 w-72 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-5 mx-2.5"
+                >
+                  <div className="flex gap-1 mb-3">
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <Star key={j} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                    ))}
                   </div>
-                  <div>
-                    <div className="text-sm font-semibold">{t.author}</div>
-                    <div className="text-xs text-zinc-500">{t.role}</div>
+                  <p className="text-sm text-zinc-300 leading-relaxed mb-4">"{t.quote}"</p>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500/30 to-violet-500/30 border border-indigo-500/20 flex items-center justify-center text-xs font-bold text-indigo-300">
+                      {t.avatar}
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">{t.author}</div>
+                      <div className="text-[10px] text-zinc-500">{t.role}</div>
+                    </div>
                   </div>
                 </div>
-              </motion.div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -921,40 +1085,40 @@ export default function LandingPage() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-4xl font-bold mb-4">Frequently asked questions</h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">Frequently asked</h2>
+          <p className="text-zinc-400">Everything you need to know before getting started.</p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.15 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
         >
           <Accordion type="single" collapsible className="space-y-2">
             {FAQ.map((item, i) => (
-              <motion.div
+              <AccordionItem
                 key={i}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.35, delay: i * 0.04 }}
+                value={`item-${i}`}
+                className="border border-white/[0.07] rounded-xl px-5 bg-white/[0.02] hover:border-white/12 transition-colors"
               >
-                <AccordionItem value={`item-${i}`} className="border border-white/10 rounded-xl px-4">
-                  <AccordionTrigger className="text-left text-sm font-medium text-zinc-200 hover:no-underline">
-                    {item.q}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-sm text-zinc-400 leading-relaxed">
-                    {item.a}
-                  </AccordionContent>
-                </AccordionItem>
-              </motion.div>
+                <AccordionTrigger className="text-left text-sm font-medium text-zinc-200 hover:text-white hover:no-underline py-4 transition-colors">
+                  {item.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-zinc-400 leading-relaxed pb-4">
+                  {item.a}
+                </AccordionContent>
+              </AccordionItem>
             ))}
           </Accordion>
         </motion.div>
       </section>
 
-      {/* CTA footer */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, rgba(99,102,241,0.2) 0%, transparent 70%)" }} />
+      {/* CTA section */}
+      <section className="py-28 relative overflow-hidden">
+        {/* Dramatic radial glow */}
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center 40%, rgba(99,102,241,0.18) 0%, transparent 65%)" }} />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff04_1px,transparent_1px),linear-gradient(to_bottom,#ffffff04_1px,transparent_1px)] bg-[size:40px_40px]" />
+
         <motion.div
           className="container mx-auto px-6 text-center relative"
           initial={{ opacity: 0, y: 32 }}
@@ -962,21 +1126,36 @@ export default function LandingPage() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-5xl font-black mb-4">Ready to fill your calendar?</h2>
-          <p className="text-zinc-400 text-lg mb-8 max-w-xl mx-auto">
-            50 free credits. No credit card. Start detecting intent signals in minutes.
+          <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs px-3 py-1.5 rounded-full font-medium mb-8">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+            50 credits — no credit card required
+          </div>
+
+          <h2 className="text-5xl md:text-6xl font-black mb-5 tracking-tight">Ready to fill your calendar?</h2>
+          <p className="text-zinc-400 text-lg mb-10 max-w-lg mx-auto">
+            Start detecting intent signals in minutes. No setup fee, cancel anytime.
           </p>
-          <Link href="/signup">
-            <Button size="xl" className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-2xl shadow-indigo-500/30 px-12 h-14 text-lg font-semibold rounded-xl">
-              Start free — no credit card
-              <ArrowRight className="w-5 h-5" />
-            </Button>
-          </Link>
-          <p className="text-sm text-zinc-600 mt-4">Join 500+ growth teams already using LeadPilot</p>
-          <div className="flex flex-wrap justify-center gap-6 mt-6 text-xs text-zinc-600">
-            {["SOC 2 compliant", "GDPR ready", "AES-256 encryption", "99.9% uptime SLA", "No setup fee", "Cancel anytime"].map(item => (
+
+          <div className="relative inline-flex">
+            {/* Animated pulse rings */}
+            <div className="absolute -inset-3 rounded-2xl border border-indigo-500/20 animate-[pulse-ring_2.5s_ease-out_infinite]" />
+            <div className="absolute -inset-5 rounded-2xl border border-indigo-500/10 animate-[pulse-ring_2.5s_ease-out_infinite_0.5s]" />
+            <Link href="/signup">
+              <Button size="lg" className="relative bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-2xl shadow-indigo-500/40 px-12 h-14 text-lg font-semibold rounded-xl transition-all">
+                Start free — no credit card
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
+
+          <p className="text-sm text-zinc-600 mt-8">Join 500+ growth teams already using LeadPilot</p>
+          <div className="flex flex-wrap justify-center gap-5 mt-5 text-xs text-zinc-600">
+            {["SOC 2 compliant", "GDPR ready", "AES-256 encrypted", "99.9% uptime SLA", "No setup fee", "Cancel anytime"].map(item => (
               <div key={item} className="flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5 text-indigo-400" /> {item}
+                <div className="w-3.5 h-3.5 rounded-full bg-indigo-500/15 flex items-center justify-center">
+                  <Check className="w-2 h-2 text-indigo-400" />
+                </div>
+                {item}
               </div>
             ))}
           </div>
@@ -984,26 +1163,36 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-12 text-sm text-zinc-600">
+      <footer className="border-t border-white/[0.05] py-14 text-sm text-zinc-600">
         <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-md bg-indigo-600 flex items-center justify-center">
-                <Target className="w-3 h-3 text-white" />
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
+                  <Target className="w-3.5 h-3.5 text-white" />
+                </div>
+                <span className="font-bold text-zinc-300">LeadPilot 2.0</span>
               </div>
-              <span className="font-semibold text-zinc-400">LeadPilot 2.0</span>
+              <p className="text-xs text-zinc-700 max-w-xs">The intent-driven B2B prospecting platform for growth teams.</p>
             </div>
-            <div className="flex flex-wrap items-center gap-6 text-zinc-600">
-              <a href="#features" className="hover:text-zinc-400 transition-colors">Features</a>
-              <a href="#pricing" className="hover:text-zinc-400 transition-colors">Pricing</a>
-              <a href="#faq" className="hover:text-zinc-400 transition-colors">FAQ</a>
-              <Link href="/login" className="hover:text-zinc-400 transition-colors">Log in</Link>
-              <Link href="/signup" className="hover:text-zinc-400 transition-colors">Sign up</Link>
-              <a href="https://twitter.com/leadpilot" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-400 transition-colors">𝕏 Twitter</a>
-              <span className="text-zinc-700 hover:text-zinc-500 cursor-pointer transition-colors">Privacy</span>
-              <span className="text-zinc-700 hover:text-zinc-500 cursor-pointer transition-colors">Terms</span>
+            <div className="flex flex-wrap items-center gap-5 text-zinc-600">
+              <a href="#how-it-works" className="hover:text-zinc-300 transition-colors">How it works</a>
+              <a href="#features" className="hover:text-zinc-300 transition-colors">Features</a>
+              <a href="#pricing" className="hover:text-zinc-300 transition-colors">Pricing</a>
+              <a href="#faq" className="hover:text-zinc-300 transition-colors">FAQ</a>
+              <Link href="/login" className="hover:text-zinc-300 transition-colors">Log in</Link>
+              <Link href="/signup" className="hover:text-zinc-300 transition-colors">Sign up</Link>
+              <a href="https://twitter.com/leadpilot" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-300 transition-colors">𝕏 Twitter</a>
+              <span className="hover:text-zinc-400 cursor-pointer transition-colors">Privacy</span>
+              <span className="hover:text-zinc-400 cursor-pointer transition-colors">Terms</span>
             </div>
-            <p className="text-zinc-700">© {new Date().getFullYear()} LeadPilot. All rights reserved.</p>
+          </div>
+          <div className="border-t border-white/[0.05] mt-8 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
+            <p className="text-zinc-700 text-xs">© {new Date().getFullYear()} LeadPilot, Inc. All rights reserved.</p>
+            <div className="flex items-center gap-4 text-xs text-zinc-700">
+              <span className="flex items-center gap-1.5"><Shield className="w-3 h-3 text-zinc-600" /> SOC 2 compliant</span>
+              <span className="flex items-center gap-1.5"><Check className="w-3 h-3 text-zinc-600" /> GDPR ready</span>
+            </div>
           </div>
         </div>
       </footer>

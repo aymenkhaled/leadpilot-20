@@ -89,10 +89,13 @@ export default function SignalsPage() {
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Zap className="w-6 h-6 text-yellow-400" /> Intent Signals
+          <h1 className="text-2xl font-bold flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center">
+              <Zap className="w-4 h-4 text-yellow-400" />
+            </div>
+            Intent Signals
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {pagination.total} signals detected
             {stats?.unacted > 0 && (
               <span className="ml-2 text-yellow-400 font-medium">{stats.unacted} unacted</span>
@@ -148,7 +151,7 @@ export default function SignalsPage() {
       {stats?.byType && stats.byType.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {stats.byType.map((t: any) => (
-            <Card key={t.type} className={`bg-card/50 border-border/50 cursor-pointer hover:border-indigo-500/30 transition-colors ${typeFilter === t.type ? "border-indigo-500/50 bg-indigo-500/5" : ""}`}
+            <Card key={t.type} className={`gradient-top-border-yellow bg-card/50 border-border/50 cursor-pointer hover-glow transition-all ${typeFilter === t.type ? "border-yellow-500/30 bg-yellow-500/5" : ""}`}
               onClick={() => setTypeFilter(typeFilter === t.type ? "all" : t.type)}>
               <CardContent className="p-3 text-center">
                 <div className="text-xl mb-1">{getSignalIcon(t.type)}</div>

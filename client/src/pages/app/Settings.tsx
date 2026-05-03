@@ -544,7 +544,7 @@ function BillingTab() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-card/50 border-border/50">
+      <Card className="gradient-top-border-violet bg-card/50 border-border/50">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -563,7 +563,7 @@ function BillingTab() {
 
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
         {plans.map(plan => (
-          <Card key={plan.id} className={`border ${workspace?.plan === plan.id ? "border-indigo-500/50 bg-indigo-500/5" : "border-border/50 bg-card/50"}`}>
+          <Card key={plan.id} className={`transition-all ${workspace?.plan === plan.id ? "gradient-top-border border-indigo-500/30 bg-indigo-500/5" : "border-border/50 bg-card/50 hover:border-border/80"}`}>
             <CardContent className="p-4">
               <div className="font-bold text-lg mb-1">{plan.name}</div>
               <div className="text-2xl font-black mb-3">${plan.price}<span className="text-sm font-normal text-muted-foreground">/mo</span></div>
@@ -661,10 +661,13 @@ export default function SettingsPage() {
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Settings className="w-6 h-6 text-muted-foreground" /> Settings
+        <h1 className="text-2xl font-bold flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-zinc-500/10 border border-zinc-500/20 flex items-center justify-center">
+            <Settings className="w-4 h-4 text-zinc-400" />
+          </div>
+          Settings
         </h1>
-        <p className="text-sm text-muted-foreground">Manage your workspace preferences and API keys</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Manage your workspace preferences and API keys</p>
       </div>
 
       <Tabs defaultValue={defaultTab}>

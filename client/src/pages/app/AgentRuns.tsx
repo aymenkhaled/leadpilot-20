@@ -69,10 +69,10 @@ function AgentRunCard({ run }: { run: any }) {
   const steps = (run.steps || []) as any[];
 
   return (
-    <Card className="bg-card/50 border-border/50">
+    <Card className="gradient-top-border bg-card/50 border-border/50 hover-glow transition-all">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-indigo-500/20 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
             {run.status === "running" ? (
               <Loader className="w-4 h-4 text-indigo-400 animate-spin" />
             ) : run.status === "completed" ? (
@@ -257,10 +257,13 @@ export default function AgentRunsPage() {
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Bot className="w-6 h-6 text-indigo-400" /> Agent Runs
+          <h1 className="text-2xl font-bold flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+              <Bot className="w-4 h-4 text-indigo-400" />
+            </div>
+            Agent Runs
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {pagination.total} total runs · auto-refreshing
             {pagination.total > 0 && data?.successRate !== undefined && (
               <span className="ml-2 text-green-400 font-medium">{data.successRate}% success</span>
@@ -336,9 +339,11 @@ export default function AgentRunsPage() {
           {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
         </div>
       ) : runs.length === 0 ? (
-        <div className="text-center py-16 border border-dashed border-border rounded-xl">
-          <Bot className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
-          <h3 className="font-semibold mb-1">
+        <div className="text-center py-16 border border-dashed border-border/40 rounded-2xl bg-card/20">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-4">
+            <Bot className="w-7 h-7 text-indigo-400/50" />
+          </div>
+          <h3 className="font-semibold mb-1.5">
             {statusFilter !== "all" || approvalFilter !== "all" ? "No matching runs" : "No agent runs yet"}
           </h3>
           <p className="text-sm text-muted-foreground mb-4">

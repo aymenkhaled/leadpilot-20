@@ -76,6 +76,17 @@ Full-stack B2B prospecting SaaS platform that turns job postings into enriched, 
 12. **Billing**: Stripe checkout + customer portal + webhook handler (checkout.session.completed, customer.subscription.deleted)
 13. **Keyboard shortcuts**: `?` for help, `S` scrape, `C` compose, `/` search focus, `G+J/D/S/A/C/O` navigation (vim-style)
 
+## UI Redesign (Session 15 — Dark Premium SaaS)
+- **Landing page full redesign**: Announcement bar (emerald pulse dot), sticky nav with gradient underline, gradient logo icon, animated gradient headline, "How it works" 3-step section, CSS marquee logo ticker, stat cards with colored glassmorphism backgrounds, comparison table with gradient header row, `gradient-border-wrap` on featured pricing card, testimonials marquee with duplicate rows, FAQ accordion with refined borders, dramatic CTA with animated pulse rings, improved footer layout. All 3D SignalNetwork code preserved intact.
+- **AppLayout sidebar redesign**: `bg-[#0d0d12]` background, gradient logo icon, active nav left-bar accent (`absolute w-0.5 h-5 bg-gradient-to-b from-indigo-400 to-violet-500`), shimmer on credits widget, plan-specific colors (free/pro/agency/scale), mobile overlay sidebar
+- **Dashboard redesign**: `StatCard` with `gradient-top-border` color variants + `hover-glow`, greeting header, quick-actions strip, onboarding 3-step banner (empty state), activity charts with gradient fills, credit panel with dynamic bar colors, funnel clickable bars, all empty states upgraded
+- **App page header upgrades**: All pages (Jobs, Signals, Companies, Contacts, Outreach, AgentRuns, Settings) now have icon wrapped in `w-8 h-8 rounded-lg bg-color-500/10 border border-color-500/20` icon container
+- **Card upgrades**: Signal stat cards → `gradient-top-border-yellow`, Outreach stat cards → `gradient-top-border-green`, Company cards → `gradient-top-border-blue`, Contact cards → `gradient-top-border-violet`, AgentRun cards → `gradient-top-border`, Settings billing cards → `gradient-top-border-violet`
+- **Empty state upgrades**: All pages now use rounded-2xl with icon in glassmorphism container instead of plain dashed borders
+- **Button `gradient` variant**: `bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500` added to button variants
+- **CSS utilities** (`client/src/index.css`): `.gradient-top-border`, `.gradient-top-border-green/violet/yellow/blue/pink`, `.shimmer-bg`, `.animate-marquee`, `.gradient-border-wrap`, `.hover-glow`, `.mesh-gradient-orb`
+- **Tailwind keyframes** (`tailwind.config.ts`): shimmer, gradient-x, marquee, pulse-ring, count-up, scale-in
+
 ## Features Added (Session 14)
 - **Low-credits warning** — sidebar credits card turns red (border + text + bar) when credits < 10; shows "Low credits — upgrade plan" micro-label
 - **Signals unacted count** — Signals page subtitle now shows unacted count in yellow alongside total signal count

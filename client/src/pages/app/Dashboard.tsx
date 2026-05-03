@@ -5,14 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
-import { formatRelativeTime, getSignalIcon, getSignalColor, formatBudget, getPlatformColor, getStatusColor, cn } from "@/lib/utils";
+import { formatRelativeTime, getSignalIcon, getSignalColor, getPlatformColor, getStatusColor, cn } from "@/lib/utils";
 import { Link } from "wouter";
 import {
   Briefcase, Users, Building2, Mail, Zap, Bot, TrendingUp, ArrowRight,
-  CreditCard, Target, Activity, BarChart3, RefreshCw,
+  CreditCard, Target, Activity, BarChart3, RefreshCw, Sparkles,
 } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 interface DashboardData {
   jobs: { total: number };
@@ -37,7 +36,7 @@ function TopCompaniesWidget() {
   if (!companies || companies.length === 0) return null;
 
   return (
-    <Card className="bg-card/50 border-border/50">
+    <Card className="gradient-top-border-blue bg-card/50 border-border/50 hover-glow">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -51,7 +50,7 @@ function TopCompaniesWidget() {
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
           {companies.slice(0, 10).map((c: any) => (
-            <div key={c.name} className="flex items-center gap-2 p-2 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors min-w-0">
+            <div key={c.name} className="flex items-center gap-2 p-2 rounded-lg bg-accent/20 hover:bg-accent/40 border border-border/30 hover:border-border/60 transition-all min-w-0">
               <div className="w-6 h-6 rounded shrink-0 bg-blue-500/20 flex items-center justify-center overflow-hidden">
                 {c.domain ? (
                   <img
@@ -76,25 +75,30 @@ function TopCompaniesWidget() {
   );
 }
 
+const STAT_CARD_STYLES: Record<string, { icon: string; glow: string; border: string; bar?: string }> = {
+  indigo: { icon: "text-indigo-400 bg-indigo-500/10",  glow: "", border: "gradient-top-border" },
+  violet: { icon: "text-violet-400 bg-violet-500/10",  glow: "", border: "gradient-top-border-violet" },
+  green:  { icon: "text-green-400  bg-green-500/10",   glow: "", border: "gradient-top-border-green" },
+  blue:   { icon: "text-blue-400   bg-blue-500/10",    glow: "", border: "gradient-top-border-blue" },
+  yellow: { icon: "text-yellow-400 bg-yellow-500/10",  glow: "", border: "gradient-top-border-yellow" },
+  pink:   { icon: "text-pink-400   bg-pink-500/10",    glow: "", border: "gradient-top-border-pink" },
+};
+
 function StatCard({ icon: Icon, label, value, sub, color = "indigo" }: any) {
-  const colors: Record<string, string> = {
-    indigo: "text-indigo-400 bg-indigo-500/10",
-    violet: "text-violet-400 bg-violet-500/10",
-    green: "text-green-400 bg-green-500/10",
-    blue: "text-blue-400 bg-blue-500/10",
-    yellow: "text-yellow-400 bg-yellow-500/10",
-    pink: "text-pink-400 bg-pink-500/10",
-  };
+  const s = STAT_CARD_STYLES[color] || STAT_CARD_STYLES.indigo;
   return (
-    <Card className="bg-card/50 border-border/50 hover:border-indigo-500/30 transition-colors">
+    <Card className={cn(
+      "relative bg-card/50 border-border/50 hover:border-border/80 transition-all duration-200 overflow-hidden hover-glow",
+      s.border
+    )}>
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs text-muted-foreground font-medium mb-1">{label}</p>
-            <p className="text-2xl font-bold">{value?.toLocaleString() ?? "—"}</p>
-            {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
+            <p className="text-xs text-muted-foreground font-medium mb-1.5">{label}</p>
+            <p className="text-2xl font-bold tabular-nums">{value?.toLocaleString() ?? "—"}</p>
+            {sub && <p className="text-xs text-muted-foreground mt-1.5">{sub}</p>}
           </div>
-          <div className={`w-9 h-9 rounded-lg ${colors[color]} flex items-center justify-center shrink-0`}>
+          <div className={`w-9 h-9 rounded-lg ${s.icon} flex items-center justify-center shrink-0`}>
             <Icon className="w-4 h-4" />
           </div>
         </div>
@@ -142,16 +146,19 @@ export default function DashboardPage() {
     name: label,
     value: dash?.funnel[key] || 0,
     color: FUNNEL_COLORS[i] || "#6366f1",
+    key,
   }));
+
+  const greeting = new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening";
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold">
-            Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"},{" "}
-            {user?.firstName} 👋
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            Good {greeting}, {user?.firstName}
+            <span className="text-xl">👋</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">Here's your prospecting overview</p>
         </div>
@@ -166,71 +173,66 @@ export default function DashboardPage() {
             <RefreshCw className="w-3.5 h-3.5" />
           </Button>
           <Link href="/app/jobs">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="border-border/60 hover:border-border">
               <Briefcase className="w-4 h-4" /> Browse jobs
             </Button>
           </Link>
           <Link href="/app/signals">
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500">
+            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 shadow-sm shadow-indigo-500/20">
               <Zap className="w-4 h-4" /> View signals
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Quick actions strip — non-empty state */}
+      {/* Quick actions strip */}
       {!isEmpty && !isLoading && (
         <div className="flex flex-wrap gap-2">
-          <Link href="/app/jobs">
-            <Button variant="outline" size="sm" className="h-8 text-xs">
-              <Briefcase className="w-3.5 h-3.5" /> Browse jobs
-            </Button>
-          </Link>
-          <Link href="/app/contacts">
-            <Button variant="outline" size="sm" className="h-8 text-xs">
-              <Users className="w-3.5 h-3.5" /> View contacts
-            </Button>
-          </Link>
-          <Link href="/app/signals">
-            <Button variant="outline" size="sm" className="h-8 text-xs">
-              <Zap className="w-3.5 h-3.5" /> Signals{(dash?.signals.strong || 0) > 0 && <span className="ml-1 text-yellow-400 font-bold">{dash?.signals.strong} strong</span>}
-            </Button>
-          </Link>
-          <Link href="/app/outreach">
-            <Button variant="outline" size="sm" className="h-8 text-xs">
-              <Mail className="w-3.5 h-3.5" /> Outreach
-            </Button>
-          </Link>
-          <Link href="/app/agent">
-            <Button variant="outline" size="sm" className="h-8 text-xs">
-              <Bot className="w-3.5 h-3.5" /> Agent runs
-            </Button>
-          </Link>
+          {[
+            { href: "/app/jobs", icon: Briefcase, label: "Browse jobs" },
+            { href: "/app/contacts", icon: Users, label: "View contacts" },
+            { href: "/app/signals", icon: Zap, label: "Signals", extra: (dash?.signals.strong || 0) > 0 ? <span className="ml-1 text-yellow-400 font-bold">{dash?.signals.strong} strong</span> : null },
+            { href: "/app/outreach", icon: Mail, label: "Outreach" },
+            { href: "/app/agent", icon: Bot, label: "Agent runs" },
+          ].map(({ href, icon: Icon, label, extra }) => (
+            <Link key={href} href={href}>
+              <Button variant="outline" size="sm" className="h-8 text-xs border-border/50 hover:border-border/80">
+                <Icon className="w-3.5 h-3.5" /> {label}{extra}
+              </Button>
+            </Link>
+          ))}
         </div>
       )}
 
       {/* Quick-start onboarding banner */}
       {isEmpty && (
-        <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-5">
-          <h2 className="font-semibold text-indigo-300 mb-1">Welcome to LeadPilot 2.0 🚀</h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Get started in 3 steps: scrape jobs → enrich contacts → send your first pitch.
-          </p>
-          <div className="grid sm:grid-cols-3 gap-3">
-            {[
-              { step: "1", title: "Scrape jobs", desc: "Pull from Upwork, RemoteOK, Indeed and more", href: "/app/jobs", label: "Go to Jobs" },
-              { step: "2", title: "Add API keys", desc: "Enable waterfall enrichment with your own keys", href: "/app/settings/api-keys", label: "Add keys" },
-              { step: "3", title: "Send a pitch", desc: "AI drafts the email — you review and send", href: "/app/outreach", label: "Compose" },
-            ].map(({ step, title, desc, href, label }) => (
-              <Link key={step} href={href}>
-                <div className="rounded-lg border border-border/50 bg-card/50 p-4 hover:border-indigo-500/40 transition-colors cursor-pointer">
-                  <div className="w-6 h-6 rounded-full bg-indigo-600/30 text-indigo-400 text-xs font-bold flex items-center justify-center mb-2">{step}</div>
-                  <div className="font-medium text-sm mb-0.5">{title}</div>
-                  <div className="text-xs text-muted-foreground mb-3">{desc}</div>
-                  <span className="text-xs text-indigo-400 font-medium">{label} →</span>
-                </div>
-              </Link>
-            ))}
+        <div className="relative rounded-xl border border-indigo-500/25 bg-indigo-500/5 p-6 overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
+          <div className="absolute inset-0 shimmer-bg" />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+              <h2 className="font-semibold text-indigo-300">Welcome to LeadPilot 2.0</h2>
+            </div>
+            <p className="text-sm text-muted-foreground mb-5">
+              Get started in 3 steps: scrape jobs → enrich contacts → send your first pitch.
+            </p>
+            <div className="grid sm:grid-cols-3 gap-3">
+              {[
+                { step: "1", title: "Scrape jobs", desc: "Pull from Upwork, RemoteOK, Indeed and more", href: "/app/jobs", label: "Go to Jobs", color: "text-indigo-400 bg-indigo-500/15" },
+                { step: "2", title: "Add API keys", desc: "Enable waterfall enrichment with your own keys", href: "/app/settings/api-keys", label: "Add keys", color: "text-violet-400 bg-violet-500/15" },
+                { step: "3", title: "Send a pitch", desc: "AI drafts the email — you review and send", href: "/app/outreach", label: "Compose", color: "text-green-400 bg-green-500/15" },
+              ].map(({ step, title, desc, href, label, color }) => (
+                <Link key={step} href={href}>
+                  <div className="rounded-xl border border-border/50 bg-card/50 p-4 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all cursor-pointer group">
+                    <div className={cn("w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center mb-3", color)}>{step}</div>
+                    <div className="font-medium text-sm mb-1">{title}</div>
+                    <div className="text-xs text-muted-foreground mb-3">{desc}</div>
+                    <span className="text-xs text-indigo-400 font-medium group-hover:text-indigo-300 transition-colors">{label} →</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -238,11 +240,11 @@ export default function DashboardPage() {
       {/* Stats grid */}
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 9 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+          {Array.from({ length: 9 }).map((_, i) => <Skeleton key={i} className="h-[92px] rounded-xl" />)}
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <StatCard icon={Briefcase} label="Total Jobs" value={dash?.jobs.total} sub={`${dash?.pipeline?.active || 0} active`} color="indigo" />
+          <StatCard icon={Briefcase} label="Total Jobs" value={dash?.jobs.total} sub={`${dash?.pipeline?.active || 0} active in pipeline`} color="indigo" />
           <StatCard icon={Users} label="Contacts" value={dash?.contacts.total} sub={`${dash?.contacts.verified} verified`} color="violet" />
           <StatCard icon={Building2} label="Companies" value={dash?.companies.total} color="blue" />
           <StatCard icon={Zap} label="Intent Signals" value={dash?.signals.total} sub={`${dash?.signals.strong} strong`} color="yellow" />
@@ -261,8 +263,8 @@ export default function DashboardPage() {
       )}
 
       <div className="grid md:grid-cols-3 gap-6">
-        {/* Jobs + Outreach charts stacked */}
-        <Card className="md:col-span-2 bg-card/50 border-border/50">
+        {/* Activity chart */}
+        <Card className="md:col-span-2 gradient-top-border bg-card/50 border-border/50 hover-glow">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-indigo-400" /> Activity (30 days)
@@ -274,7 +276,7 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Jobs discovered</p>
+                  <p className="text-xs text-muted-foreground mb-2">Jobs discovered</p>
                   <ResponsiveContainer width="100%" height={120}>
                     <AreaChart data={jobsOverTime || []}>
                       <defs>
@@ -283,19 +285,20 @@ export default function DashboardPage() {
                           <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#71717a" }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 10, fill: "#71717a" }} tickLine={false} axisLine={false} width={24} />
+                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} width={24} />
                       <Tooltip
-                        contentStyle={{ background: "#111113", border: "1px solid #27272a", borderRadius: "8px", fontSize: "11px" }}
-                        labelStyle={{ color: "#a1a1aa" }}
+                        contentStyle={{ background: "#0f0f14", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", fontSize: "11px", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
+                        labelStyle={{ color: "#71717a" }}
+                        itemStyle={{ color: "#818cf8" }}
                       />
-                      <Area type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={2} fill="url(#jobGrad)" />
+                      <Area type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={2} fill="url(#jobGrad)" dot={false} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
                 {outreachOverTime && outreachOverTime.length > 0 && (
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Outreach sent</p>
+                    <p className="text-xs text-muted-foreground mb-2">Outreach sent</p>
                     <ResponsiveContainer width="100%" height={100}>
                       <AreaChart data={outreachOverTime}>
                         <defs>
@@ -304,13 +307,14 @@ export default function DashboardPage() {
                             <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#71717a" }} tickLine={false} axisLine={false} />
-                        <YAxis tick={{ fontSize: 10, fill: "#71717a" }} tickLine={false} axisLine={false} width={24} />
+                        <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} />
+                        <YAxis tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} width={24} />
                         <Tooltip
-                          contentStyle={{ background: "#111113", border: "1px solid #27272a", borderRadius: "8px", fontSize: "11px" }}
-                          labelStyle={{ color: "#a1a1aa" }}
+                          contentStyle={{ background: "#0f0f14", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", fontSize: "11px", boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
+                          labelStyle={{ color: "#71717a" }}
+                          itemStyle={{ color: "#4ade80" }}
                         />
-                        <Area type="monotone" dataKey="sent" stroke="#22c55e" strokeWidth={2} fill="url(#outGrad)" />
+                        <Area type="monotone" dataKey="sent" stroke="#22c55e" strokeWidth={2} fill="url(#outGrad)" dot={false} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
@@ -320,11 +324,11 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Credits */}
-        <Card className="bg-card/50 border-border/50">
+        {/* Credits panel */}
+        <Card className="gradient-top-border-violet bg-card/50 border-border/50 hover-glow">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-indigo-400" /> Credits
+              <CreditCard className="w-4 h-4 text-violet-400" /> Credits
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -335,19 +339,19 @@ export default function DashboardPage() {
                 const isMed = pct < 40;
                 return (
                   <>
-                    <div className="flex justify-between text-sm mb-2">
+                    <div className="flex justify-between text-sm mb-3">
                       <span className="text-muted-foreground">Balance</span>
-                      <span className={`font-bold ${isLow ? "text-red-400" : isMed ? "text-yellow-400" : "text-indigo-400"}`}>
+                      <span className={`font-bold tabular-nums ${isLow ? "text-red-400" : isMed ? "text-yellow-400" : "text-violet-400"}`}>
                         {dash?.credits.balance?.toLocaleString()}
                       </span>
                     </div>
-                    <div className="w-full h-2 rounded-full bg-muted/50 overflow-hidden">
+                    <div className="w-full h-2 rounded-full bg-muted/30 overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-700 ${isLow ? "bg-red-500" : isMed ? "bg-yellow-500" : "bg-indigo-500"}`}
+                        className={`h-full rounded-full transition-all duration-700 ${isLow ? "bg-red-500" : isMed ? "bg-yellow-500" : "bg-gradient-to-r from-indigo-500 to-violet-500"}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    {isLow && <p className="text-[10px] text-red-400 mt-1">Low balance — top up soon</p>}
+                    {isLow && <p className="text-[10px] text-red-400 mt-1.5">Low balance — top up soon</p>}
                     <div className="flex justify-between text-xs text-muted-foreground mt-1">
                       <span>0</span>
                       <span>{creditMax.toLocaleString()}</span>
@@ -356,12 +360,18 @@ export default function DashboardPage() {
                 );
               })()}
             </div>
-            <div className="text-xs text-muted-foreground space-y-1">
-              <div className="flex justify-between"><span>Plan</span><span className="font-medium capitalize text-foreground">{dash?.credits.plan}</span></div>
-              <div className="flex justify-between"><span>Used this month</span><span className="font-medium text-foreground">{Number(dash?.credits.usedThisMonth || 0).toFixed(1)}</span></div>
+            <div className="text-xs text-muted-foreground space-y-1.5 pt-1 border-t border-border/30">
+              <div className="flex justify-between">
+                <span>Plan</span>
+                <span className="font-medium capitalize text-foreground">{dash?.credits.plan}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Used this month</span>
+                <span className="font-medium text-foreground">{Number(dash?.credits.usedThisMonth || 0).toFixed(1)}</span>
+              </div>
             </div>
             <Link href="/app/settings/billing">
-              <Button variant="outline" size="sm" className="w-full">
+              <Button variant="outline" size="sm" className="w-full border-border/60 hover:border-violet-500/40 hover:text-violet-300 transition-colors">
                 Upgrade plan <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
@@ -371,7 +381,7 @@ export default function DashboardPage() {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Funnel */}
-        <Card className="bg-card/50 border-border/50">
+        <Card className="gradient-top-border bg-card/50 border-border/50 hover-glow">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Activity className="w-4 h-4 text-indigo-400" /> Pipeline funnel
@@ -384,20 +394,19 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {funnelData.filter(f => f.value > 0 || true).slice(0, 6).map((item, idx) => {
+                {funnelData.filter(f => f.value > 0 || true).slice(0, 6).map((item) => {
                   const max = Math.max(...funnelData.map(f => f.value), 1);
-                  const statusKey = Object.keys(FUNNEL_LABELS)[idx];
                   return (
-                    <Link key={item.name} href={`/app/jobs?status=${statusKey}`}>
+                    <Link key={item.name} href={`/app/jobs?status=${item.key}`}>
                       <div className="flex items-center gap-3 group cursor-pointer rounded-lg hover:bg-accent/30 px-1 py-0.5 transition-colors">
                         <div className="w-20 text-xs text-muted-foreground shrink-0 group-hover:text-foreground transition-colors">{item.name}</div>
-                        <div className="flex-1 h-5 rounded-full bg-muted/50 overflow-hidden">
+                        <div className="flex-1 h-5 rounded-full bg-muted/30 overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-700"
                             style={{ width: `${(item.value / max) * 100}%`, background: item.color }}
                           />
                         </div>
-                        <div className="text-xs font-medium w-8 text-right">{item.value}</div>
+                        <div className="text-xs font-medium tabular-nums w-8 text-right">{item.value}</div>
                       </div>
                     </Link>
                   );
@@ -408,7 +417,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Recent signals */}
-        <Card className="bg-card/50 border-border/50">
+        <Card className="gradient-top-border-yellow bg-card/50 border-border/50 hover-glow">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -426,20 +435,20 @@ export default function DashboardPage() {
               </div>
             ) : dash?.recent.signals.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <Zap className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">No signals yet</p>
-                <p className="text-xs mt-1">Scrape jobs to generate signals</p>
+                <Zap className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                <p className="text-sm font-medium mb-1">No signals yet</p>
+                <p className="text-xs">Scrape jobs to generate intent signals</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {dash?.recent.signals.map((signal: any) => (
-                  <div key={signal.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors">
+                  <div key={signal.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/40 transition-colors">
                     <span className="text-lg">{getSignalIcon(signal.type)}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{signal.title}</p>
                       <p className="text-xs text-muted-foreground">{formatRelativeTime(signal.detectedAt)}</p>
                     </div>
-                    <Badge variant={signal.strength === "strong" ? "success" : "secondary"} className="text-[10px]">
+                    <Badge variant={signal.strength === "strong" ? "success" : "secondary"} className="text-[10px] shrink-0">
                       {signal.strength}
                     </Badge>
                   </div>
@@ -452,7 +461,7 @@ export default function DashboardPage() {
 
       {/* Credits over time */}
       {creditsOverTime && creditsOverTime.length > 0 && (
-        <Card className="bg-card/50 border-border/50">
+        <Card className="gradient-top-border bg-card/50 border-border/50 hover-glow">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-indigo-400" /> Credit usage — last 30 days
@@ -470,7 +479,7 @@ export default function DashboardPage() {
                 <XAxis dataKey="date" hide />
                 <YAxis hide />
                 <Tooltip
-                  contentStyle={{ background: "#18181b", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, fontSize: 12 }}
+                  contentStyle={{ background: "#0f0f14", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, fontSize: 12, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
                   formatter={(v: any) => [`${Number(v).toFixed(1)} credits`, "Used"]}
                   labelStyle={{ color: "#71717a" }}
                 />
@@ -481,12 +490,12 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Top companies leaderboard */}
+      {/* Top companies */}
       <TopCompaniesWidget />
 
-      {/* Recent jobs + recent outreach side by side */}
+      {/* Recent jobs + outreach */}
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className="bg-card/50 border-border/50">
+        <Card className="gradient-top-border bg-card/50 border-border/50 hover-glow">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -504,25 +513,25 @@ export default function DashboardPage() {
               </div>
             ) : dash?.recent.jobs.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <Briefcase className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">No jobs yet</p>
+                <Briefcase className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                <p className="text-sm font-medium mb-1">No jobs yet</p>
                 <Link href="/app/jobs">
-                  <Button size="sm" className="mt-3 bg-indigo-600 hover:bg-indigo-500">Start scraping</Button>
+                  <Button size="sm" className="mt-2 bg-indigo-600 hover:bg-indigo-500">Start scraping</Button>
                 </Link>
               </div>
             ) : (
               <div className="space-y-1">
                 {dash?.recent.jobs.map((job: any) => (
                   <Link key={job.id} href={`/app/jobs/${job.id}`}>
-                    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer" data-testid={`card-job-${job.id}`}>
+                    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/40 transition-colors cursor-pointer" data-testid={`card-job-${job.id}`}>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-medium truncate">{job.title}</p>
                           <Badge className={`text-[10px] ${getPlatformColor(job.platform)}`}>{job.platform}</Badge>
                         </div>
                         <p className="text-xs text-muted-foreground truncate">{job.companyName || "Unknown"} · {formatRelativeTime(job.discoveredAt)}</p>
                       </div>
-                      <Badge className={`text-[10px] ${getStatusColor(job.status)}`}>{job.status}</Badge>
+                      <Badge className={`text-[10px] ${getStatusColor(job.status)} shrink-0`}>{job.status}</Badge>
                     </div>
                   </Link>
                 ))}
@@ -531,8 +540,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent outreach */}
-        <Card className="bg-card/50 border-border/50">
+        <Card className="gradient-top-border-green bg-card/50 border-border/50 hover-glow">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -550,28 +558,28 @@ export default function DashboardPage() {
               </div>
             ) : (dash?.outreach.total ?? 0) === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <Mail className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">No outreach yet</p>
+                <Mail className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                <p className="text-sm font-medium mb-1">No outreach yet</p>
                 <Link href="/app/outreach">
-                  <Button size="sm" variant="outline" className="mt-3">Compose email</Button>
+                  <Button size="sm" variant="outline" className="mt-2">Compose email</Button>
                 </Link>
               </div>
             ) : (
               <div className="space-y-1">
                 {(dash?.recent?.outreach || []).map((item: any) => (
                   <Link key={item.id} href="/app/outreach">
-                    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/40 transition-colors cursor-pointer">
                       <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm truncate">{item.subject || "(no subject)"}</p>
                         <p className="text-xs text-muted-foreground">{formatRelativeTime(item.sentAt || item.createdAt)}</p>
                       </div>
-                      <Badge className={`text-[10px] ${getStatusColor(item.status)}`}>{item.status}</Badge>
+                      <Badge className={`text-[10px] ${getStatusColor(item.status)} shrink-0`}>{item.status}</Badge>
                     </div>
                   </Link>
                 ))}
-                <div className="pt-1 border-t border-border/30">
-                  <p className="text-[11px] text-center text-muted-foreground pt-1">
+                <div className="pt-2 border-t border-border/30">
+                  <p className="text-[11px] text-center text-muted-foreground">
                     {dash?.outreach.openRate}% open rate · {dash?.outreach.replyRate}% reply rate
                   </p>
                 </div>

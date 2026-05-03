@@ -282,8 +282,13 @@ export default function JobsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Jobs</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+              <Briefcase className="w-4 h-4 text-indigo-400" />
+            </div>
+            Jobs
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             {stats?.total || 0} total jobs
             {(stats?.byPlatform?.length || 0) > 0 && ` · ${stats.byPlatform.length} platform${stats.byPlatform.length !== 1 ? "s" : ""}`}
           </p>
