@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Og_xKlr6h1r04FJiM2EGY"
+uri = "file://DESIGN_BRIEF.md"
+type = "text"
+title = "LeadPilot 2.0 — Design Brief for Replit Agent"
