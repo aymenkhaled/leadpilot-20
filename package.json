@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node_modules/.bin/tsx watch server/index.ts",
-    "build": "vite build",
+    "build": "vite build && tsc -p tsconfig.server.json",
     "db:push": "drizzle-kit push",
     "start": "node dist/server/index.js"
   },
