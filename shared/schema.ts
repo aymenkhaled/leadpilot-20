@@ -113,6 +113,7 @@ export const jobs = pgTable("jobs", {
   isAnonymous: boolean("is_anonymous").default(false),
   isDuplicate: boolean("is_duplicate").default(false),
   archivedAt: timestamp("archived_at"),
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (t) => [
@@ -226,6 +227,7 @@ export const outreach = pgTable("outreach", {
   repliedAt: timestamp("replied_at"),
   replyContent: text("reply_content"),
   replyClassification: text("reply_classification"), // positive | negative | neutral | out_of_office
+  toEmail: text("to_email"),
   followUpCount: integer("follow_up_count").default(0),
   nextFollowUpAt: timestamp("next_follow_up_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -274,6 +276,22 @@ export const workspaceSettings = pgTable("workspace_settings", {
   notifyEnrichComplete: boolean("notify_enriched").default(true),
   notifyReply: boolean("notify_reply").default(true),
   notifyEmail: text("notify_email"),
+  // Sender identity
+  senderName: text("sender_name"),
+  senderEmail: text("sender_email"),
+  replyToEmail: text("reply_to_email"),
+  emailSignature: text("email_signature"),
+  // Sending limits
+  maxEmailsPerDay: integer("max_emails_per_day").default(50),
+  minSendDelaySec: integer("min_send_delay_sec").default(60),
+  // SMTP
+  smtpHost: text("smtp_host"),
+  smtpPort: integer("smtp_port"),
+  smtpUser: text("smtp_user"),
+  smtpPass: text("smtp_pass"),
+  // Extra notifications
+  notifyAgentComplete: boolean("notify_agent_complete").default(true),
+  notifyLowCredits: boolean("notify_low_credits").default(true),
   // Scraping defaults
   defaultScrapeKeyword: text("default_scrape_keyword"),
   defaultScrapeLocation: text("default_scrape_location"),

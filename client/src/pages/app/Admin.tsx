@@ -12,8 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Redirect } from "wouter";
-import { Shield, Users, Building2, Briefcase, UserCheck, CreditCard, Pencil, Search, Bot, ShieldCheck, ShieldOff, Coins, Mail } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { Shield, Users, Building2, Briefcase, UserCheck, CreditCard, Pencil, Search, Bot, ShieldCheck, ShieldOff, Coins, Mail, Webhook, ChevronDown, ChevronUp, RefreshCw, CheckCircle, XCircle, Clock } from "lucide-react";
+import { formatDate, formatRelativeTime } from "@/lib/utils";
 
 const PLAN_COLORS: Record<string, string> = {
   free: "bg-zinc-500/20 text-zinc-400",
@@ -326,7 +326,124 @@ export default function AdminPage() {
         </Card>
       </div>
 
+      {/* Webhook Event Log */}
+      <WebhookEventLog />
+
       {editWs && <EditWorkspaceDialog ws={editWs} onClose={() => setEditWs(null)} />}
     </div>
+  );
+}
+
+function WebhookEventLog() {
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const qc = useQueryClient();
+
+  const { data: hooks, isLoading, refetch, isFetching } = useQuery({
+    queryKey: ["admin", "webhooks"],
+    queryFn: () => api.get<any[]>("/webhooks"),
+    staleTime: 30_000,
+  });
+
+  return (
+    <Card className="gradient-top-border-violet bg-card/50 border-border/50">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+              <Webhook className="w-3.5 h-3.5 text-violet-400" />
+            </div>
+            Webhook Endpoints
+            {hooks && (
+              <span className="text-xs text-muted-foreground font-normal">({hooks.length})</span>
+            )}
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground"
+            onClick={() => refetch()}
+            title="Refresh"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+        ) : !hooks || hooks.length === 0 ? (
+          <div className="text-center py-8">
+            <Webhook className="w-8 h-8 text-zinc-700 mx-auto mb-2" />
+            <p className="text-sm text-zinc-600 mb-1">No webhooks configured</p>
+            <p className="text-xs text-zinc-700">Users can register webhooks from the Settings page</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {hooks.map((hook: any) => (
+              <div key={hook.id} className="rounded-xl border border-border/40 bg-card/30 overflow-hidden">
+                <div
+                  className="flex items-center gap-3 p-3 cursor-pointer hover:bg-white/[0.02] transition-colors"
+                  onClick={() => setExpanded(expanded === hook.id ? null : hook.id)}
+                >
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${hook.isActive ? "bg-green-400" : "bg-zinc-600"}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-mono font-medium text-zinc-300 truncate">{hook.url}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {(hook.events || []).slice(0, 3).map((e: string) => (
+                        <Badge key={e} variant="outline" className="text-[9px] px-1 py-0">{e}</Badge>
+                      ))}
+                      {(hook.events || []).length > 3 && (
+                        <span className="text-[10px] text-zinc-600">+{(hook.events || []).length - 3}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {hook.lastFiredAt ? (
+                      <div className="flex items-center gap-1 text-[10px] text-zinc-600">
+                        <Clock className="w-2.5 h-2.5" />
+                        <span>{formatRelativeTime(hook.lastFiredAt)}</span>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-zinc-700">Never fired</span>
+                    )}
+                    <Badge className={`text-[9px] ${hook.isActive ? "bg-green-500/20 text-green-400" : "bg-zinc-500/20 text-zinc-500"}`}>
+                      {hook.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                    {expanded === hook.id ? <ChevronUp className="w-3 h-3 text-zinc-600" /> : <ChevronDown className="w-3 h-3 text-zinc-600" />}
+                  </div>
+                </div>
+
+                {expanded === hook.id && (
+                  <div className="px-4 pb-3 pt-0 border-t border-border/30 bg-black/20">
+                    <div className="grid grid-cols-2 gap-3 mt-3 text-xs">
+                      <div>
+                        <p className="text-zinc-600 mb-0.5">Endpoint URL</p>
+                        <p className="text-zinc-300 font-mono text-[11px] break-all">{hook.url}</p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-600 mb-0.5">Created</p>
+                        <p className="text-zinc-400">{formatDate(hook.createdAt)}</p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-600 mb-0.5">Events</p>
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {(hook.events || []).map((e: string) => (
+                            <Badge key={e} variant="outline" className="text-[9px]">{e}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-zinc-600 mb-0.5">Last fired</p>
+                        <p className="text-zinc-400">{hook.lastFiredAt ? formatRelativeTime(hook.lastFiredAt) : "—"}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

@@ -8,10 +8,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Users, Search, Mail, Check, Star, ExternalLink, ChevronLeft, ChevronRight, Trash2, Download, Copy, Send } from "lucide-react";
+import { Users, Search, Mail, Check, Star, ExternalLink, ChevronLeft, ChevronRight, Trash2, Download, Copy, Send, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { initials, formatRelativeTime } from "@/lib/utils";
+import ContactTimelineModal from "@/components/ContactTimelineModal";
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest first" },
@@ -23,6 +24,7 @@ const SORT_OPTIONS = [
 export default function ContactsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [timelineContactId, setTimelineContactId] = useState<string | null>(null);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [championOnly, setChampionOnly] = useState(false);
   const [sort, setSort] = useState("newest");
@@ -232,6 +234,15 @@ export default function ContactsPage() {
                     >
                       via {contact.enrichmentProvider || "manual"}
                     </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-violet-400 hover:bg-violet-500/10"
+                      onClick={() => setTimelineContactId(contact.id)}
+                      title="View outreach timeline"
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                    </Button>
                     {contact.email && (
                       <Button
                         variant="ghost"
@@ -269,6 +280,11 @@ export default function ContactsPage() {
           <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(pagination.pages, p + 1))} disabled={page === pagination.pages}><ChevronRight className="w-4 h-4" /></Button>
         </div>
       )}
+      <ContactTimelineModal
+        contactId={timelineContactId}
+        open={!!timelineContactId}
+        onClose={() => setTimelineContactId(null)}
+      />
     </div>
   );
 }

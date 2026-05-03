@@ -23,6 +23,7 @@ import analyticsRouter from "./routes/analytics.js";
 import adminRouter from "./routes/admin.js";
 import billingRouter from "./routes/billing.js";
 import webhooksRouter from "./routes/webhooks.js";
+import searchRouter from "./routes/search.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isDev = process.env.NODE_ENV !== "production";
@@ -81,6 +82,7 @@ async function main() {
   app.use("/api/admin", adminRouter);
   app.use("/api/billing", billingRouter);
   app.use("/api/webhooks", webhooksRouter);
+  app.use("/api/search", searchRouter);
 
   // Health check
   app.get("/api/health", (_req, res) => {

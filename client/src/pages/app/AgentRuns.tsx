@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { getStatusColor, formatRelativeTime } from "@/lib/utils";
 import {
   Bot, Play, X, ChevronDown, ChevronUp, CheckCircle, XCircle, Loader,
-  Clock, ChevronLeft, ChevronRight,
+  Clock, ChevronLeft, ChevronRight, Download,
 } from "lucide-react";
 
 const STEP_ICONS: Record<string, string> = {
@@ -294,6 +294,43 @@ export default function AgentRunsPage() {
             data-testid="btn-start-agent"
           >
             <Play className="w-4 h-4" /> Autonomous run
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            title="Export agent runs to CSV"
+            onClick={() => {
+              const params = new URLSearchParams({
+                ...(statusFilter !== "all" && { status: statusFilter }),
+                ...(approvalFilter !== "all" && { approvalMode: approvalFilter }),
+                limit: "1000",
+              });
+              api.get<any>(`/agent/runs?${params}`).then(data => {
+                const rows = (data.runs || []) as any[];
+                const headers = ["ID", "Job Title", "Status", "Mode", "Steps Completed", "Created At", "Completed At"];
+                const csv = [
+                  headers.join(","),
+                  ...rows.map((r: any) => [
+                    r.id,
+                    `"${(r.jobTitle || "").replace(/"/g, '""')}"`,
+                    r.status,
+                    r.approvalMode || "",
+                    (r.stepsCompleted || []).length,
+                    r.createdAt ? new Date(r.createdAt).toISOString() : "",
+                    r.completedAt ? new Date(r.completedAt).toISOString() : "",
+                  ].join(","))
+                ].join("\n");
+                const blob = new Blob([csv], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "agent_runs.csv";
+                a.click();
+                URL.revokeObjectURL(url);
+              });
+            }}
+          >
+            <Download className="w-4 h-4" /> Export CSV
           </Button>
         </div>
       </div>

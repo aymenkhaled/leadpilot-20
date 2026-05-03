@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db.js";
-import { users, workspaces, usageLog, jobs, contacts, agentRuns, outreach } from "@shared/schema";
+import { users, workspaces, usageLog, jobs, contacts, agentRuns, outreach, workspaceMembers } from "@shared/schema";
 import { eq, desc, sql, count, ne } from "drizzle-orm";
 import { requireAdmin, type AuthRequest } from "../auth.js";
 
@@ -31,8 +31,8 @@ router.get("/workspaces", async (_req, res) => {
             .from(contacts).where(sql`workspace_id = ANY(${wsIds})`).groupBy(contacts.workspaceId)
         : Promise.resolve([]),
       wsIds.length > 0
-        ? db.select({ workspaceId: users.workspaceId, count: sql<number>`count(*)` })
-            .from(users).where(sql`workspace_id = ANY(${wsIds})`).groupBy(users.workspaceId)
+        ? db.select({ workspaceId: workspaceMembers.workspaceId, count: sql<number>`count(*)` })
+            .from(workspaceMembers).where(sql`workspace_id = ANY(${wsIds})`).groupBy(workspaceMembers.workspaceId)
         : Promise.resolve([]),
     ]);
 
@@ -60,7 +60,7 @@ router.get("/users", async (_req, res) => {
       firstName: users.firstName,
       lastName: users.lastName,
       isAdmin: users.isAdmin,
-      workspaceId: users.workspaceId,
+      workspaceId: users.currentWorkspaceId,
       createdAt: users.createdAt,
     }).from(users).orderBy(desc(users.createdAt)).limit(200);
 

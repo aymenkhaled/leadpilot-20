@@ -344,7 +344,7 @@ export default function JobDetailPage() {
                         {contact.email && (
                           <div className="text-xs text-indigo-400 flex items-center gap-1.5 mt-0.5 flex-wrap">
                             <span className="truncate">{contact.email}</span>
-                            {contact.emailVerified && <Check className="w-3 h-3 text-green-400 shrink-0" title="Verified" />}
+                            {contact.emailVerified && <Check className="w-3 h-3 text-green-400 shrink-0" aria-label="Verified" />}
                             {contact.emailConfidence > 0 && (
                               <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full border shrink-0",
                                 contact.emailConfidence >= 90 ? "border-green-500/30 text-green-400" :

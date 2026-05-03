@@ -20,9 +20,11 @@ router.get("/", async (req: AuthRequest, res) => {
 
     const search = req.query.search as string | undefined;
     const jobId = req.query.jobId as string | undefined;
+    const contactId = req.query.contactId as string | undefined;
     const conditions = [eq(outreach.workspaceId, wid)];
     if (status) conditions.push(eq(outreach.status, status));
     if (jobId) conditions.push(eq(outreach.jobId, jobId));
+    if (contactId) conditions.push(eq(outreach.contactId, contactId));
     if (search) conditions.push(
       or(ilike(outreach.subject, `%${search}%`), ilike(outreach.body, `%${search}%`))!
     );

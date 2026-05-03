@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
@@ -10,6 +11,7 @@ import { Link } from "wouter";
 import {
   Briefcase, Users, Building2, Mail, Zap, Bot, TrendingUp, ArrowRight,
   CreditCard, Target, Activity, BarChart3, RefreshCw, Sparkles,
+  CheckCircle2, Circle, ChevronDown, ChevronUp, X,
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -24,6 +26,128 @@ interface DashboardData {
   funnel: Record<string, number>;
   credits: { balance: number; usedThisMonth: number; plan: string };
   recent: { jobs: any[]; signals: any[]; outreach: any[] };
+}
+
+function OnboardingChecklist({ dash }: { dash?: DashboardData }) {
+  const [open, setOpen] = useState(true);
+  const [dismissed, setDismissed] = useState(() => {
+    try { return localStorage.getItem("onboarding_dismissed") === "1"; } catch { return false; }
+  });
+
+  const steps = [
+    {
+      key: "jobs",
+      label: "Scrape your first job postings",
+      done: (dash?.jobs?.total ?? 0) > 0,
+      href: "/app/jobs",
+      desc: "Use the Jobs page to pull from 10+ job boards",
+    },
+    {
+      key: "contacts",
+      label: "Find decision-maker contact",
+      done: (dash?.contacts?.total ?? 0) > 0,
+      href: "/app/jobs",
+      desc: "Click Enrich on any job to find the hiring manager",
+    },
+    {
+      key: "outreach",
+      label: "Send your first outreach email",
+      done: (dash?.outreach?.sent ?? 0) > 0 || (dash?.outreach?.replied ?? 0) > 0,
+      href: "/app/outreach",
+      desc: "Compose or AI-generate a pitch from a contact",
+    },
+    {
+      key: "agent",
+      label: "Run the AI agent autonomously",
+      done: (dash?.agent?.completed ?? 0) > 0,
+      href: "/app/agent",
+      desc: "Let the agent research, draft, and send pitches for you",
+    },
+  ];
+
+  const completedCount = steps.filter(s => s.done).length;
+  const allDone = completedCount === steps.length;
+
+  function dismiss() {
+    try { localStorage.setItem("onboarding_dismissed", "1"); } catch {}
+    setDismissed(true);
+  }
+
+  if (dismissed) return null;
+  if (allDone && completedCount === steps.length) return null;
+
+  const pct = Math.round((completedCount / steps.length) * 100);
+
+  return (
+    <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/5 via-transparent to-violet-500/5 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold">Getting started with LeadPilot</p>
+            <p className="text-xs text-muted-foreground">{completedCount} of {steps.length} steps complete</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Progress bar */}
+          <div className="hidden sm:flex items-center gap-2">
+            <div className="w-24 h-1.5 rounded-full bg-white/5 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground">{pct}%</span>
+          </div>
+          <button
+            onClick={() => setOpen(o => !o)}
+            className="text-zinc-600 hover:text-zinc-400 transition-colors p-1"
+          >
+            {open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+          <button
+            onClick={dismiss}
+            className="text-zinc-700 hover:text-zinc-500 transition-colors p-1"
+            title="Dismiss"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Steps */}
+      {open && (
+        <div className="grid sm:grid-cols-2 gap-px bg-border/20">
+          {steps.map((step, i) => (
+            <Link href={step.href} key={step.key}>
+              <div className={cn(
+                "flex items-start gap-3 p-3.5 transition-colors cursor-pointer bg-background/40",
+                step.done ? "opacity-60" : "hover:bg-indigo-500/5"
+              )}>
+                {step.done ? (
+                  <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
+                ) : (
+                  <div className="w-4 h-4 rounded-full border-2 border-indigo-500/40 shrink-0 mt-0.5 flex items-center justify-center">
+                    <span className="text-[9px] text-indigo-400 font-bold">{i + 1}</span>
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className={cn("text-xs font-medium", step.done ? "line-through text-muted-foreground" : "text-zinc-200")}>
+                    {step.label}
+                  </p>
+                  <p className="text-[11px] text-zinc-600 mt-0.5">{step.desc}</p>
+                </div>
+                {!step.done && <ArrowRight className="w-3 h-3 text-zinc-700 ml-auto shrink-0 mt-0.5" />}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function TopCompaniesWidget() {
@@ -184,6 +308,9 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* Onboarding checklist — auto-hides when all done or dismissed */}
+      <OnboardingChecklist dash={dash} />
 
       {/* Quick actions strip */}
       {!isEmpty && !isLoading && (

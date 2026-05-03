@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getStatusColor, formatRelativeTime, truncate } from "@/lib/utils";
+import EmailPreviewModal from "@/components/EmailPreviewModal";
 import { Mail, ChevronLeft, ChevronRight, Send, Eye, MessageSquare, Plus, Sparkles, Expand, Trash2, Copy, Check as CheckIcon, Search, Download } from "lucide-react";
 
 function ComposeDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -194,6 +195,7 @@ export default function OutreachPage() {
   const [search, setSearch] = useState("");
   const [composeOpen, setComposeOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [previewItem, setPreviewItem] = useState<any>(null);
   const qc = useQueryClient();
   const searchStr = useSearch();
 
@@ -458,6 +460,15 @@ export default function OutreachPage() {
                     <Button
                       size="sm"
                       variant="ghost"
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-violet-400 hover:bg-violet-500/10"
+                      onClick={() => setPreviewItem(item)}
+                      title="Preview email"
+                    >
+                      <Expand className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       className="h-7 w-7 p-0 text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10"
                       onClick={() => copyEmail(item)}
                       title="Copy email to clipboard"
@@ -534,6 +545,13 @@ export default function OutreachPage() {
       )}
 
       <ComposeDialog open={composeOpen} onClose={() => setComposeOpen(false)} />
+      {previewItem && (
+        <EmailPreviewModal
+          item={previewItem}
+          open={!!previewItem}
+          onClose={() => setPreviewItem(null)}
+        />
+      )}
     </div>
   );
 }

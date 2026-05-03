@@ -12,11 +12,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
+import KanbanBoard from "@/components/KanbanBoard";
 import { getPlatformColor, getStatusColor, formatBudget, formatRelativeTime, truncate } from "@/lib/utils";
 import {
   Briefcase, Search, Plus, RefreshCw, ExternalLink, Globe, MapPin,
   DollarSign, Clock, Zap, ChevronLeft, ChevronRight, Play, Download, Trash2,
-  Trophy, XCircle,
+  Trophy, XCircle, LayoutGrid, List,
 } from "lucide-react";
 
 const PLATFORMS = [
@@ -179,6 +180,7 @@ export default function JobsPage() {
   const [contactFoundOnly, setContactFoundOnly] = useState(false);
   const [scrapeOpen, setScrapeOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const qc = useQueryClient();
 
   const { data: latestRun } = useQuery({
@@ -294,6 +296,27 @@ export default function JobsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          {/* View toggle */}
+          <div className="flex rounded-lg border border-border/50 overflow-hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`h-8 px-2.5 rounded-none border-0 ${viewMode === "list" ? "bg-indigo-600/20 text-indigo-300" : "text-zinc-600 hover:text-zinc-300"}`}
+              onClick={() => setViewMode("list")}
+              title="List view"
+            >
+              <List className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`h-8 px-2.5 rounded-none border-0 border-l border-border/50 ${viewMode === "kanban" ? "bg-indigo-600/20 text-indigo-300" : "text-zinc-600 hover:text-zinc-300"}`}
+              onClick={() => setViewMode("kanban")}
+              title="Kanban view"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </Button>
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -496,12 +519,20 @@ export default function JobsPage() {
         </div>
       )}
 
-      {/* Jobs list */}
-      {isLoading ? (
+      {/* Kanban board — replaces list when viewMode=kanban */}
+      {viewMode === "kanban" && (
+        <KanbanBoard
+          search={search}
+          platformFilter={platformFilter}
+          remoteOnly={remoteOnly}
+        />
+      )}
+
+      {viewMode === "list" && isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
         </div>
-      ) : jobs.length === 0 ? (
+      ) : viewMode === "list" && jobs.length === 0 ? (
         <div className="text-center py-16 border border-dashed border-border rounded-xl">
           <Briefcase className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
           <h3 className="font-semibold mb-1">
@@ -527,7 +558,7 @@ export default function JobsPage() {
             </Button>
           )}
         </div>
-      ) : (
+      ) : viewMode === "list" ? (
         <div className="space-y-2">
           {/* Select-all row */}
           <div className="flex items-center gap-3 px-4 py-1.5">
@@ -673,7 +704,7 @@ export default function JobsPage() {
             </Card>
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Pagination */}
       {pagination.pages > 1 && (

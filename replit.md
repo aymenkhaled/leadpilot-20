@@ -230,6 +230,18 @@ Full-stack B2B prospecting SaaS platform that turns job postings into enriched, 
 - **Signals empty state filter-aware** — "No matching signals" + "Clear all filters" button covering search/type/strength/hideActed
 - **Dashboard DashboardData type** — added `outreach: any[]` to `recent` field
 
+## Features Added (Session 23 — Diamond Features Blitz)
+- **Global search (⌘K omnibar)** — `GlobalSearch.tsx` + `GET /api/search?q=` endpoint; cross-entity search across jobs, contacts, companies; keyboard navigation (↑↓ enter esc); debounced 200ms; result sections with icons, badges, favicon; integrated into AppLayout sidebar
+- **Notification center** — `NotificationCenter.tsx` bell icon with unread badge in AppLayout sidebar; shows pending agent-approval drafts + recent unacted signals; links to agent/signals pages; auto-dismisses when dropdown closes
+- **Kanban board view for Jobs** — `KanbanBoard.tsx` renders 7 columns (new/classified/enriched/pitched/replied/won/lost) with drag-free move buttons; shows all 200 jobs at once; hover-reveal actions (← back, Enrich, → advance, Won); wired into Jobs.tsx with List/Kanban toggle buttons (LayoutGrid + List icons)
+- **Email preview modal** — `EmailPreviewModal.tsx` renders email with greeter/body/link highlighting; word/char count; copy-to-clipboard; metadata (to, subject, sent/opened/replied times); triggered by Expand icon on each outreach row
+- **Contact timeline modal** — `ContactTimelineModal.tsx` shows full outreach history for a contact in a vertical timeline; dots colored by status (sent/opened/replied); triggered by Clock icon button on each contact row in Contacts page
+- **Agent runs CSV export** — client-side CSV generation from paginated `/agent/runs` response; Download icon button in AgentRuns header; exports ID, job title, status, mode, steps completed, created/completed timestamps
+- **Onboarding checklist widget** — `OnboardingChecklist` component on Dashboard; 4-step progress (scrape jobs → find contact → send email → run agent); collapsible + dismissible (localStorage); progress bar; auto-hides when all 4 steps completed
+- **Webhook event log in Admin** — `WebhookEventLog` component at bottom of Admin page; expandable accordion per endpoint; shows URL, events array, last-fired time, active status; refresh button
+- **Outreach contactId filter** — `GET /api/outreach` now accepts `?contactId=` query param; powers the contact timeline modal outreach history
+- **Schema additions** — `jobs.notes`, `outreach.toEmail`, 13 workspace settings fields (smtp, sender, notifications) already pushed via `npm run db:push`
+
 ## Fixes Applied (Session 22 — Final Polish)
 - **React hooks violation fixed** — `useState` (copiedContactEmail, copiedLink) and `useQuery` (relatedOutreach) in `JobDetail.tsx` were called AFTER an early `if (isLoading)` return, violating the Rules of Hooks. Moved all three above the early return.
 - **TypeScript clean** — `npx tsc --noEmit` passes with zero errors across all files.

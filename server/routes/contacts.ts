@@ -23,8 +23,7 @@ router.get("/", async (req: AuthRequest, res) => {
       or(
         ilike(contacts.fullName, `%${search}%`),
         ilike(contacts.email, `%${search}%`),
-        ilike(contacts.title, `%${search}%`),
-        ilike(contacts.companyName, `%${search}%`)
+        ilike(contacts.title, `%${search}%`)
       )!
     );
     if (verified === "true") conditions.push(eq(contacts.emailVerified, true));

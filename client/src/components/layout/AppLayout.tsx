@@ -4,6 +4,8 @@ import { useAuth, useLogout } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import KeyboardShortcutsDialog from "@/components/KeyboardShortcutsDialog";
+import GlobalSearch from "@/components/GlobalSearch";
+import NotificationCenter from "@/components/NotificationCenter";
 import { cn, initials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -157,6 +159,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
       </ScrollArea>
+
+      {/* Search + Notifications bar */}
+      {(!collapsed || mobile) && (
+        <div className="px-3 pb-1">
+          <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/10 transition-colors">
+            <GlobalSearch />
+            <NotificationCenter />
+          </div>
+        </div>
+      )}
 
       {/* Keyboard shortcut hint */}
       {(!collapsed || mobile) && (
