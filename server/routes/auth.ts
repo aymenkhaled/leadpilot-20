@@ -42,6 +42,7 @@ router.post("/signup", async (req, res) => {
     setAuthCookie(res, token);
 
     res.status(201).json({
+      token,
       user: {
         id: user.id,
         email: user.email,
@@ -71,6 +72,7 @@ router.post("/login", async (req, res) => {
     });
 
     res.json({
+      token,
       user: {
         id: user.id,
         email: user.email,
