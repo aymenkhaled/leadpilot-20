@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import KanbanBoard from "@/components/KanbanBoard";
-import { getPlatformColor, getStatusColor, formatBudget, formatRelativeTime, truncate } from "@/lib/utils";
+import { getPlatformColor, getStatusColor, formatBudget, formatRelativeTime, truncate, stripHtml } from "@/lib/utils";
 import {
   Briefcase, Search, Plus, RefreshCw, ExternalLink, Globe, MapPin,
   DollarSign, Clock, Zap, ChevronLeft, ChevronRight, Play, Download, Trash2,
@@ -21,14 +21,15 @@ import {
 } from "lucide-react";
 
 const PLATFORMS = [
-  { id: "jobspy", name: "JobSpy (Indeed + LinkedIn + Glassdoor + Google)", sites: ["indeed", "google", "linkedin", "glassdoor", "zip_recruiter"] },
-  { id: "upwork", name: "Upwork" },
-  { id: "remoteok", name: "RemoteOK" },
-  { id: "weworkremotely", name: "We Work Remotely" },
-  { id: "freelancer", name: "Freelancer" },
-  { id: "linkedin_apify", name: "LinkedIn (via Apify — requires APIFY key)" },
-  { id: "indeed_apify", name: "Indeed (via Apify — requires APIFY key)" },
-  { id: "wellfound_apify", name: "Wellfound (via Apify — requires APIFY key)" },
+  { id: "all",            name: "🌐 All Free Platforms (best results)" },
+  { id: "remotive",       name: "Remotive — curated remote jobs" },
+  { id: "jobicy",         name: "Jobicy — remote job board" },
+  { id: "remoteok",       name: "RemoteOK — remote tech jobs" },
+  { id: "weworkremotely", name: "We Work Remotely — all categories" },
+  { id: "arbeitnow",      name: "Arbeitnow — Europe + remote" },
+  { id: "himalayas",      name: "Himalayas — remote first" },
+  { id: "upwork",         name: "Upwork — freelance projects (RSS)" },
+  { id: "freelancer",     name: "Freelancer — freelance projects" },
 ];
 
 const QUICK_PRESETS = [
@@ -45,7 +46,7 @@ const QUICK_PRESETS = [
 ];
 
 function ScrapeDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [platform, setPlatform] = useState("jobspy");
+  const [platform, setPlatform] = useState("all");
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState("");
   const [limit, setLimit] = useState(25);
@@ -637,7 +638,7 @@ export default function JobsPage() {
                       </span>
                     </div>
                     {job.description && (
-                      <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{truncate(job.description, 200)}</p>
+                      <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{truncate(stripHtml(job.description), 200)}</p>
                     )}
                   </div>
                   <div className="flex gap-1.5 shrink-0 items-center flex-wrap justify-end">

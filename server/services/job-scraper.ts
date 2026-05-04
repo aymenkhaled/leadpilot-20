@@ -1,6 +1,6 @@
 import axios from "axios";
 
-interface ScrapedJob {
+export interface ScrapedJob {
   platform: string;
   title: string;
   description?: string;
@@ -17,83 +17,158 @@ interface ScrapedJob {
   externalId?: string;
 }
 
+const UA = "Mozilla/5.0 (compatible; LeadPilot/2.0; +https://leadpilot.app)";
+const TIMEOUT = 15000;
+
 export class JobScraper {
-  async scrapeUpwork(keyword: string, limit: number = 25): Promise<ScrapedJob[]> {
+
+  // ─── Remotive ───────────────────────────────────────────────────
+  async scrapeRemotive(keyword: string, limit = 25): Promise<ScrapedJob[]> {
     try {
-      // Upwork RSS feed (public, no auth needed)
-      const query = encodeURIComponent(keyword);
-      const url = `https://www.upwork.com/ab/feed/jobs/rss?q=${query}&sort=recency`;
-      const response = await axios.get(url, {
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; LeadPilot/2.0)" },
-        timeout: 15000,
+      const res = await axios.get("https://remotive.com/api/remote-jobs", {
+        params: { search: keyword, limit: Math.min(limit, 100) },
+        headers: { "User-Agent": UA },
+        timeout: TIMEOUT,
       });
-
-      const jobs: ScrapedJob[] = [];
-      const xml = response.data as string;
-      const items = xml.match(/<item>([\s\S]*?)<\/item>/g) || [];
-
-      for (const item of items.slice(0, limit)) {
-        const title = this.extractXml(item, "title");
-        const link = this.extractXml(item, "link");
-        const description = this.extractXml(item, "description");
-        const pubDate = this.extractXml(item, "pubDate");
-
-        if (!title) continue;
-
-        const budget = this.extractBudget(description || "");
-
-        jobs.push({
-          platform: "Upwork",
-          title: this.cleanText(title),
-          description: this.cleanHtml(description || ""),
-          sourceUrl: link || undefined,
-          postedAt: pubDate ? new Date(pubDate).toISOString() : undefined,
-          budgetMin: budget.min,
-          budgetMax: budget.max,
-          budgetType: budget.type,
-          externalId: link ? `upwork-${Buffer.from(link).toString("base64").slice(0, 20)}` : undefined,
-          remote: true,
-        });
-      }
-
-      return jobs;
+      const jobs = res.data?.jobs || [];
+      return jobs.slice(0, limit).map((j: any) => ({
+        platform: "Remotive",
+        title: this.cleanText(j.title || ""),
+        description: this.cleanHtml(j.description || ""),
+        companyName: j.company_name,
+        companyDomain: this.extractDomain(j.company_url),
+        location: j.candidate_required_location || "Remote",
+        remote: true,
+        sourceUrl: j.url,
+        postedAt: j.publication_date,
+        skills: j.tags || [],
+        externalId: j.id ? `remotive-${j.id}` : undefined,
+      }));
     } catch (e: any) {
-      console.warn("Upwork scrape failed:", e.message);
+      console.warn("Remotive scrape failed:", e.message);
       return [];
     }
   }
 
-  async scrapeRemoteOK(keyword: string): Promise<ScrapedJob[]> {
+  // ─── Jobicy ─────────────────────────────────────────────────────
+  async scrapeJobicy(keyword: string, limit = 25): Promise<ScrapedJob[]> {
     try {
-      const response = await axios.get("https://remoteok.com/api", {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; LeadPilot/2.0)",
-          Accept: "application/json",
-        },
-        timeout: 15000,
+      const res = await axios.get("https://jobicy.com/api/v2/remote-jobs", {
+        params: { count: Math.min(limit, 50), tag: keyword },
+        headers: { "User-Agent": UA },
+        timeout: TIMEOUT,
       });
+      const jobs = res.data?.jobs || [];
+      return jobs.slice(0, limit).map((j: any) => ({
+        platform: "Jobicy",
+        title: this.cleanText(j.jobTitle || ""),
+        description: this.cleanHtml(j.jobDescription || j.jobExcerpt || ""),
+        companyName: j.companyName,
+        companyDomain: this.extractDomain(j.companyUrl),
+        location: j.jobGeo || "Remote",
+        remote: true,
+        sourceUrl: j.url,
+        postedAt: j.pubDate,
+        skills: (j.jobIndustry || []).concat(j.jobType || []),
+        externalId: j.id ? `jobicy-${j.id}` : undefined,
+      }));
+    } catch (e: any) {
+      console.warn("Jobicy scrape failed:", e.message);
+      return [];
+    }
+  }
 
-      const data = response.data as any[];
-      const query = keyword.toLowerCase();
+  // ─── Arbeitnow ──────────────────────────────────────────────────
+  async scrapeArbeitnow(keyword: string, limit = 25): Promise<ScrapedJob[]> {
+    try {
+      const res = await axios.get("https://arbeitnow.com/api/job-board-api", {
+        headers: { "User-Agent": UA, Accept: "application/json" },
+        timeout: TIMEOUT,
+        maxRedirects: 5,
+      });
+      const jobs: any[] = res.data?.data || [];
+      const q = keyword.toLowerCase();
+      const filtered = jobs.filter((j: any) =>
+        (j.title || "").toLowerCase().includes(q) ||
+        (j.tags || []).some((t: string) => t.toLowerCase().includes(q)) ||
+        (j.description || "").toLowerCase().includes(q)
+      );
+      return filtered.slice(0, limit).map((j: any) => ({
+        platform: "Arbeitnow",
+        title: this.cleanText(j.title || ""),
+        description: this.cleanHtml(j.description || ""),
+        companyName: j.company_name,
+        location: j.location || "Remote",
+        remote: j.remote || false,
+        sourceUrl: j.url,
+        postedAt: j.created_at,
+        skills: j.tags || [],
+        externalId: j.slug ? `arbeitnow-${j.slug}` : undefined,
+      }));
+    } catch (e: any) {
+      console.warn("Arbeitnow scrape failed:", e.message);
+      return [];
+    }
+  }
 
+  // ─── Himalayas ──────────────────────────────────────────────────
+  async scrapeHimalayas(keyword: string, limit = 25): Promise<ScrapedJob[]> {
+    try {
+      const res = await axios.get("https://himalayas.app/jobs/api", {
+        params: { q: keyword, limit: Math.min(limit, 100) },
+        headers: { "User-Agent": UA },
+        timeout: TIMEOUT,
+      });
+      const jobs: any[] = res.data?.jobs || [];
+      return jobs.slice(0, limit).map((j: any) => ({
+        platform: "Himalayas",
+        title: this.cleanText(j.title || ""),
+        description: this.cleanHtml(j.description || j.content || ""),
+        companyName: j.company?.name || j.companyName,
+        companyDomain: this.extractDomain(j.company?.url || j.companyUrl),
+        location: j.location || "Remote",
+        remote: true,
+        sourceUrl: j.applicationLink || j.url,
+        postedAt: j.publishedAt || j.createdAt,
+        skills: j.skills || j.tags || [],
+        externalId: j.slug ? `himalayas-${j.slug}` : undefined,
+      }));
+    } catch (e: any) {
+      console.warn("Himalayas scrape failed:", e.message);
+      return [];
+    }
+  }
+
+  // ─── RemoteOK ───────────────────────────────────────────────────
+  async scrapeRemoteOK(keyword: string, limit = 25): Promise<ScrapedJob[]> {
+    try {
+      const res = await axios.get("https://remoteok.com/api", {
+        headers: { "User-Agent": UA, Accept: "application/json" },
+        timeout: TIMEOUT,
+      });
+      const data = res.data as any[];
+      const q = keyword.toLowerCase();
       return data
         .filter((j: any) => j.position && (
-          j.position.toLowerCase().includes(query) ||
-          (j.tags || []).some((t: string) => t.toLowerCase().includes(query))
+          j.position.toLowerCase().includes(q) ||
+          (j.tags || []).some((t: string) => t.toLowerCase().includes(q))
         ))
-        .slice(0, 25)
+        .slice(0, limit)
         .map((j: any) => ({
           platform: "RemoteOK",
           title: j.position || "Unknown Position",
-          description: j.description || "",
+          description: this.cleanHtml(j.description || ""),
           companyName: j.company,
-          companyDomain: j.company_website?.replace(/^https?:\/\/(www\.)?/, "").split("/")[0],
+          companyDomain: this.extractDomain(j.company_website),
           location: "Remote",
           remote: true,
           sourceUrl: j.url || `https://remoteok.com/jobs/${j.id}`,
           postedAt: j.date || undefined,
           skills: j.tags || [],
           externalId: j.id ? `remoteok-${j.id}` : undefined,
+          budgetMin: j.salary_min ? Number(j.salary_min) : undefined,
+          budgetMax: j.salary_max ? Number(j.salary_max) : undefined,
+          budgetType: j.salary_min ? "annual" : undefined,
         }));
     } catch (e: any) {
       console.warn("RemoteOK scrape failed:", e.message);
@@ -101,75 +176,106 @@ export class JobScraper {
     }
   }
 
-  async scrapeWeWorkRemotely(keyword: string): Promise<ScrapedJob[]> {
-    try {
-      const categories = ["programming", "design", "marketing", "devops-sysadmin"];
-      const jobs: ScrapedJob[] = [];
-      const query = keyword.toLowerCase();
+  // ─── WeWorkRemotely (RSS) ────────────────────────────────────────
+  async scrapeWeWorkRemotely(keyword: string, limit = 25): Promise<ScrapedJob[]> {
+    const categories = [
+      "programming", "design", "marketing", "devops-sysadmin",
+      "customer-support", "sales", "product", "writing", "data-science",
+    ];
+    const jobs: ScrapedJob[] = [];
+    const q = keyword.toLowerCase();
 
-      for (const cat of categories) {
-        const url = `https://weworkremotely.com/categories/remote-${cat}-jobs.rss`;
-        try {
-          const response = await axios.get(url, {
-            headers: { "User-Agent": "Mozilla/5.0 (compatible; LeadPilot/2.0)" },
-            timeout: 10000,
+    for (const cat of categories) {
+      if (jobs.length >= limit) break;
+      try {
+        const res = await axios.get(
+          `https://weworkremotely.com/categories/remote-${cat}-jobs.rss`,
+          { headers: { "User-Agent": UA }, timeout: 10000 }
+        );
+        const xml = res.data as string;
+        const items = xml.match(/<item>([\s\S]*?)<\/item>/g) || [];
+
+        for (const item of items) {
+          if (jobs.length >= limit) break;
+          const title = this.extractXml(item, "title");
+          if (!title || !title.toLowerCase().includes(q)) continue;
+          const link = this.extractXml(item, "link");
+          const description = this.extractXml(item, "description");
+          const region = this.extractXml(item, "region");
+          const company = this.extractXml(item, "company");
+          jobs.push({
+            platform: "WeWorkRemotely",
+            title: this.cleanText(title),
+            description: this.cleanHtml(description || ""),
+            companyName: company ? this.cleanText(company) : undefined,
+            sourceUrl: link || undefined,
+            location: region || "Remote",
+            remote: true,
+            externalId: link ? `wwr-${Buffer.from(link).toString("base64").slice(0, 20)}` : undefined,
           });
+        }
+      } catch {}
+    }
 
-          const xml = response.data as string;
-          const items = xml.match(/<item>([\s\S]*?)<\/item>/g) || [];
+    return jobs;
+  }
 
-          for (const item of items) {
-            const title = this.extractXml(item, "title");
-            if (!title || !title.toLowerCase().includes(query)) continue;
-
-            const link = this.extractXml(item, "link");
-            const description = this.extractXml(item, "description");
-            const region = this.extractXml(item, "region");
-
-            jobs.push({
-              platform: "WeWorkRemotely",
-              title: this.cleanText(title),
-              description: this.cleanHtml(description || ""),
-              sourceUrl: link || undefined,
-              location: region || "Remote",
-              remote: true,
-              externalId: link ? `wwr-${Buffer.from(link).toString("base64").slice(0, 20)}` : undefined,
-            });
-          }
-        } catch {}
-      }
-
-      return jobs.slice(0, 25);
+  // ─── Upwork (RSS) ───────────────────────────────────────────────
+  async scrapeUpwork(keyword: string, limit = 25): Promise<ScrapedJob[]> {
+    try {
+      const q = encodeURIComponent(keyword);
+      const url = `https://www.upwork.com/ab/feed/jobs/rss?q=${q}&sort=recency`;
+      const res = await axios.get(url, {
+        headers: { "User-Agent": UA },
+        timeout: TIMEOUT,
+      });
+      const xml = res.data as string;
+      const items = xml.match(/<item>([\s\S]*?)<\/item>/g) || [];
+      return items.slice(0, limit).map((item) => {
+        const title = this.extractXml(item, "title");
+        const link = this.extractXml(item, "link");
+        const description = this.extractXml(item, "description");
+        const pubDate = this.extractXml(item, "pubDate");
+        const budget = this.extractBudget(description || "");
+        return {
+          platform: "Upwork",
+          title: this.cleanText(title || "Untitled"),
+          description: this.cleanHtml(description || ""),
+          sourceUrl: link || undefined,
+          postedAt: pubDate ? new Date(pubDate).toISOString() : undefined,
+          budgetMin: budget.min,
+          budgetMax: budget.max,
+          budgetType: budget.type,
+          remote: true,
+          externalId: link ? `upwork-${Buffer.from(link).toString("base64").slice(0, 20)}` : undefined,
+        };
+      }).filter(j => j.title);
     } catch (e: any) {
-      console.warn("WeWorkRemotely scrape failed:", e.message);
+      console.warn("Upwork scrape failed:", e.message);
       return [];
     }
   }
 
-  async scrapeFreelancer(keyword: string, limit: number = 25): Promise<ScrapedJob[]> {
-    // Freelancer public API
+  // ─── Freelancer (public API) ─────────────────────────────────────
+  async scrapeFreelancer(keyword: string, limit = 25): Promise<ScrapedJob[]> {
     try {
-      const query = encodeURIComponent(keyword);
-      const response = await axios.get(
-        `https://www.freelancer.com/api/projects/0.1/projects/active/?query=${query}&limit=${limit}&job_details=true`,
-        {
-          headers: { "User-Agent": "Mozilla/5.0" },
-          timeout: 15000,
-        }
+      const q = encodeURIComponent(keyword);
+      const res = await axios.get(
+        `https://www.freelancer.com/api/projects/0.1/projects/active/?query=${q}&limit=${limit}&job_details=true`,
+        { headers: { "User-Agent": UA }, timeout: TIMEOUT }
       );
-
-      const projects = response.data?.result?.projects || [];
+      const projects = res.data?.result?.projects || [];
       return projects.map((p: any) => ({
         platform: "Freelancer",
-        title: p.title,
-        description: p.description || "",
+        title: this.cleanText(p.title || ""),
+        description: this.cleanText(p.description || ""),
         remote: true,
         budgetMin: p.budget?.minimum,
         budgetMax: p.budget?.maximum,
         budgetType: p.hourly_project_info ? "hourly" : "fixed",
         sourceUrl: `https://www.freelancer.com/projects/${p.seo_url || p.id}`,
         postedAt: p.submitdate ? new Date(p.submitdate * 1000).toISOString() : undefined,
-        externalId: `freelancer-${p.id}`,
+        externalId: p.id ? `freelancer-${p.id}` : undefined,
       }));
     } catch (e: any) {
       console.warn("Freelancer scrape failed:", e.message);
@@ -177,36 +283,99 @@ export class JobScraper {
     }
   }
 
+  // ─── Multi-platform fallback (tries all free APIs) ───────────────
+  async scrapeAll(keyword: string, limit = 25): Promise<ScrapedJob[]> {
+    const results = await Promise.allSettled([
+      this.scrapeRemotive(keyword, limit),
+      this.scrapeJobicy(keyword, Math.ceil(limit / 2)),
+      this.scrapeRemoteOK(keyword, Math.ceil(limit / 2)),
+      this.scrapeWeWorkRemotely(keyword, Math.ceil(limit / 2)),
+    ]);
+
+    const jobs: ScrapedJob[] = [];
+    for (const r of results) {
+      if (r.status === "fulfilled") jobs.push(...r.value);
+    }
+
+    // Deduplicate by title+company
+    const seen = new Set<string>();
+    return jobs.filter(j => {
+      const key = `${j.title?.toLowerCase()}-${j.companyName?.toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, limit);
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────────
+
   private extractXml(text: string, tag: string): string | null {
-    const match = text.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>|<${tag}[^>]*>([\\s\\S]*?)</${tag}>`));
+    const match = text.match(
+      new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>|<${tag}[^>]*>([\\s\\S]*?)</${tag}>`)
+    );
     return match ? (match[1] || match[2] || "").trim() : null;
   }
 
-  private cleanHtml(html: string): string {
-    return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().substring(0, 5000);
+  cleanHtml(html: string): string {
+    return html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n")
+      .replace(/<\/div>/gi, "\n")
+      .replace(/<\/li>/gi, "\n")
+      .replace(/<li[^>]*>/gi, "• ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&#\d+;/g, " ")
+      .replace(/&[a-z]+;/gi, " ")
+      .replace(/\n{3,}/g, "\n\n")
+      .replace(/ {2,}/g, " ")
+      .trim()
+      .substring(0, 8000);
   }
 
   private cleanText(text: string): string {
-    return text.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').trim();
+    return text
+      .replace(/<[^>]+>/g, "")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, " ")
+      .trim();
+  }
+
+  private extractDomain(url?: string): string | undefined {
+    if (!url) return undefined;
+    try {
+      const u = new URL(url.startsWith("http") ? url : `https://${url}`);
+      return u.hostname.replace(/^www\./, "");
+    } catch {
+      return url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0] || undefined;
+    }
   }
 
   private extractBudget(text: string): { min?: number; max?: number; type?: string } {
     const hourly = text.match(/\$(\d+(?:\.\d+)?)\s*[-–]\s*\$(\d+(?:\.\d+)?)\s*\/\s*hr/i);
     if (hourly) return { min: parseFloat(hourly[1]), max: parseFloat(hourly[2]), type: "hourly" };
-
     const fixed = text.match(/\$(\d[\d,]*)\s*[-–]\s*\$(\d[\d,]*)/);
     if (fixed) {
       const min = parseFloat(fixed[1].replace(/,/g, ""));
       const max = parseFloat(fixed[2].replace(/,/g, ""));
       return { min, max, type: min < 1000 ? "hourly" : "fixed" };
     }
-
     const single = text.match(/\$(\d[\d,]+)/);
     if (single) {
       const val = parseFloat(single[1].replace(/,/g, ""));
       return { min: val, type: val < 500 ? "hourly" : "fixed" };
     }
-
     return {};
   }
 }

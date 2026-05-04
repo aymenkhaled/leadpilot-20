@@ -61,6 +61,11 @@ export function getPlatformColor(platform: string): string {
     ziprecruiter: "bg-rose-500/20 text-rose-400",
     monster: "bg-orange-500/20 text-orange-400",
     apify: "bg-violet-500/20 text-violet-400",
+    remotive: "bg-teal-500/20 text-teal-400",
+    jobicy: "bg-sky-500/20 text-sky-400",
+    arbeitnow: "bg-amber-500/20 text-amber-400",
+    himalayas: "bg-indigo-500/20 text-indigo-400",
+    all: "bg-violet-500/20 text-violet-400",
   };
   return colors[p] || "bg-zinc-500/20 text-zinc-400";
 }
@@ -112,6 +117,29 @@ export function getSignalIcon(type: string): string {
 export function truncate(str: string, length: number): string {
   if (str.length <= length) return str;
   return str.slice(0, length) + "…";
+}
+
+export function stripHtml(html: string): string {
+  if (!html) return "";
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<\/p>/gi, " ")
+    .replace(/<\/div>/gi, " ")
+    .replace(/<\/li>/gi, " ")
+    .replace(/<li[^>]*>/gi, "• ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#\d+;/g, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 export function initials(name: string): string {

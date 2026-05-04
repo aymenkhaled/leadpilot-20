@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { z } from "zod";
 import { db } from "../db.js";
-import { jobs, scrapeRuns, workspaceApiKeys } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { jobs, scrapeRuns, intentSignals } from "@shared/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../auth.js";
-import { decryptApiKey } from "../crypto.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -13,16 +12,15 @@ router.use(requireAuth);
 router.get("/platforms", (_req, res) => {
   res.json({
     platforms: [
-      { id: "jobspy", name: "JobSpy (Indeed, LinkedIn, Glassdoor, Google, ZipRecruiter)", requiresKey: false },
-      { id: "upwork", name: "Upwork", requiresKey: false },
-      { id: "freelancer", name: "Freelancer", requiresKey: false },
-      { id: "remoteok", name: "RemoteOK", requiresKey: false },
-      { id: "weworkremotely", name: "We Work Remotely", requiresKey: false },
-      { id: "linkedin_apify", name: "LinkedIn (via Apify)", requiresKey: true, keyProvider: "apify" },
-      { id: "indeed_apify", name: "Indeed (via Apify)", requiresKey: true, keyProvider: "apify" },
-      { id: "glassdoor_apify", name: "Glassdoor (via Apify)", requiresKey: true, keyProvider: "apify" },
-      { id: "dice_apify", name: "Dice (via Apify)", requiresKey: true, keyProvider: "apify" },
-      { id: "wellfound_apify", name: "Wellfound (via Apify)", requiresKey: true, keyProvider: "apify" },
+      { id: "all",            name: "All Free Platforms (Remotive + Jobicy + RemoteOK + WeWorkRemotely)", requiresKey: false },
+      { id: "remotive",       name: "Remotive",           requiresKey: false },
+      { id: "jobicy",         name: "Jobicy",              requiresKey: false },
+      { id: "remoteok",       name: "RemoteOK",            requiresKey: false },
+      { id: "weworkremotely", name: "We Work Remotely",    requiresKey: false },
+      { id: "arbeitnow",      name: "Arbeitnow",           requiresKey: false },
+      { id: "himalayas",      name: "Himalayas",           requiresKey: false },
+      { id: "upwork",         name: "Upwork (RSS)",        requiresKey: false },
+      { id: "freelancer",     name: "Freelancer",          requiresKey: false },
     ],
   });
 });
@@ -42,7 +40,6 @@ router.post("/", async (req: AuthRequest, res) => {
     const data = scrapeSchema.parse(req.body);
     const wid = req.user!.workspaceId;
 
-    // Create scrape run record
     const [run] = await db.insert(scrapeRuns).values({
       workspaceId: wid,
       platform: data.platform,
@@ -53,7 +50,6 @@ router.post("/", async (req: AuthRequest, res) => {
 
     res.status(202).json({ runId: run.id, message: "Scrape started" });
 
-    // Execute async
     executeScrape(run.id, wid, data).catch(console.error);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -63,7 +59,6 @@ router.post("/", async (req: AuthRequest, res) => {
 // GET /api/scrape/runs
 router.get("/runs", async (req: AuthRequest, res) => {
   try {
-    const { desc } = await import("drizzle-orm");
     const limit = Math.min(Number(req.query.limit) || 20, 100);
     const runs = await db.select().from(scrapeRuns)
       .where(eq(scrapeRuns.workspaceId, req.user!.workspaceId))
@@ -94,54 +89,53 @@ async function executeScrape(runId: string, workspaceId: string, data: z.infer<t
   };
 
   try {
+    const { JobScraper } = await import("../services/job-scraper.js");
+    const scraper = new JobScraper();
+
     let scrapedJobs: any[] = [];
 
-    if (data.platform === "jobspy" || data.platform.includes("indeed") || data.platform.includes("linkedin")) {
-      // Try JobSpy Python sidecar
-      try {
-        const response = await fetch("http://localhost:5001/scrape", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            search_term: data.keyword,
-            location: data.location,
-            sites: data.sites || ["indeed", "google"],
-            results_wanted: data.resultsWanted,
-            hours_old: data.hoursOld,
-          }),
-        });
+    const p = data.platform.toLowerCase();
+    const kw = data.keyword;
+    const lim = data.resultsWanted;
 
-        if (response.ok) {
-          const result = await response.json() as any;
-          scrapedJobs = result.jobs || [];
-        }
-      } catch (e) {
-        console.warn("JobSpy sidecar unavailable, using fallback scraper");
-        scrapedJobs = await fallbackScrape(data);
-      }
-    } else if (data.platform === "upwork") {
-      scrapedJobs = await scrapeUpwork(data.keyword, data.resultsWanted);
-    } else if (data.platform === "remoteok") {
-      scrapedJobs = await scrapeRemoteOK(data.keyword);
-    } else if (data.platform === "weworkremotely") {
-      scrapedJobs = await scrapeWeWorkRemotely(data.keyword);
+    if (p === "all") {
+      scrapedJobs = await scraper.scrapeAll(kw, lim);
+    } else if (p === "remotive") {
+      scrapedJobs = await scraper.scrapeRemotive(kw, lim);
+    } else if (p === "jobicy") {
+      scrapedJobs = await scraper.scrapeJobicy(kw, lim);
+    } else if (p === "remoteok") {
+      scrapedJobs = await scraper.scrapeRemoteOK(kw, lim);
+    } else if (p === "weworkremotely") {
+      scrapedJobs = await scraper.scrapeWeWorkRemotely(kw, lim);
+    } else if (p === "arbeitnow") {
+      scrapedJobs = await scraper.scrapeArbeitnow(kw, lim);
+    } else if (p === "himalayas") {
+      scrapedJobs = await scraper.scrapeHimalayas(kw, lim);
+    } else if (p === "upwork") {
+      scrapedJobs = await scraper.scrapeUpwork(kw, lim);
+    } else if (p === "freelancer") {
+      scrapedJobs = await scraper.scrapeFreelancer(kw, lim);
     } else {
-      scrapedJobs = await fallbackScrape(data);
+      // Unknown platform → try all
+      scrapedJobs = await scraper.scrapeAll(kw, lim);
     }
 
-    // Save jobs to DB, dedup by externalId
+    console.log(`[scrape] platform=${data.platform} keyword="${kw}" → ${scrapedJobs.length} jobs found`);
+
     let newCount = 0;
+    const savedJobIds: string[] = [];
+
     for (const job of scrapedJobs) {
       try {
-        // Check duplicate
         if (job.externalId) {
           const existing = await db.query.jobs.findFirst({
             where: and(eq(jobs.workspaceId, workspaceId), eq(jobs.externalId, job.externalId)),
           });
-          if (existing) { continue; }
+          if (existing) continue;
         }
 
-        await db.insert(jobs).values({
+        const [saved] = await db.insert(jobs).values({
           workspaceId,
           platform: job.platform || data.platform,
           title: job.title,
@@ -160,8 +154,12 @@ async function executeScrape(runId: string, workspaceId: string, data: z.infer<t
           isAnonymous: !job.companyName || ["confidential", "stealth", "undisclosed"].some(
             k => (job.companyName || "").toLowerCase().includes(k)
           ),
-        });
+        }).returning();
+
         newCount++;
+        savedJobIds.push(saved.id);
+
+        await generateSignals(workspaceId, saved, job);
       } catch (e) {
         console.warn("Failed to save job:", e);
       }
@@ -173,43 +171,54 @@ async function executeScrape(runId: string, workspaceId: string, data: z.infer<t
       jobsNew: newCount,
       completedAt: new Date(),
     });
+
+    console.log(`[scrape] Done — ${newCount} new jobs saved, signals generated`);
   } catch (err: any) {
+    console.error("[scrape] Fatal error:", err.message);
     await updateRun({ status: "failed", error: err.message, completedAt: new Date() });
   }
 }
 
-async function fallbackScrape(data: any): Promise<any[]> {
-  // RSS/public feed scraping as fallback
-  return [];
-}
-
-async function scrapeUpwork(keyword: string, limit: number): Promise<any[]> {
+async function generateSignals(workspaceId: string, savedJob: any, raw: any) {
   try {
-    const { JobScraper } = await import("../services/job-scraper.js");
-    const scraper = new JobScraper();
-    return await scraper.scrapeUpwork(keyword, limit);
-  } catch {
-    return [];
-  }
-}
+    const signals: any[] = [];
 
-async function scrapeRemoteOK(keyword: string): Promise<any[]> {
-  try {
-    const { JobScraper } = await import("../services/job-scraper.js");
-    const scraper = new JobScraper();
-    return await scraper.scrapeRemoteOK(keyword);
-  } catch {
-    return [];
-  }
-}
+    // Hiring spike — any tech/engineering job with a company is a hiring signal
+    if (savedJob.companyName && !savedJob.isAnonymous) {
+      signals.push({
+        workspaceId,
+        jobId: savedJob.id,
+        type: "hiring_spike",
+        title: `${savedJob.companyName} is hiring — ${savedJob.title}`,
+        description: savedJob.location
+          ? `New ${savedJob.remote ? "remote" : savedJob.location} opening detected`
+          : "New job opening detected via job board scrape",
+        strength: (raw.budgetMax && raw.budgetMax > 5000) || (raw.skills && raw.skills.length > 5)
+          ? "strong" : "moderate",
+        sourceName: raw.platform || "Job Board",
+        sourceUrl: savedJob.sourceUrl,
+      });
+    }
 
-async function scrapeWeWorkRemotely(keyword: string): Promise<any[]> {
-  try {
-    const { JobScraper } = await import("../services/job-scraper.js");
-    const scraper = new JobScraper();
-    return await scraper.scrapeWeWorkRemotely(keyword);
-  } catch {
-    return [];
+    // Budget signal — high-value contract
+    if (savedJob.budgetMax && savedJob.budgetMax >= 2000) {
+      signals.push({
+        workspaceId,
+        jobId: savedJob.id,
+        type: "funding",
+        title: `High-value contract: ${savedJob.title}`,
+        description: `Budget up to $${savedJob.budgetMax.toLocaleString()} ${savedJob.budgetType || ""} at ${savedJob.companyName || "company"}`,
+        strength: savedJob.budgetMax >= 10000 ? "strong" : "moderate",
+        sourceName: raw.platform || "Job Board",
+        sourceUrl: savedJob.sourceUrl,
+      });
+    }
+
+    for (const sig of signals) {
+      await db.insert(intentSignals).values(sig).catch(() => {});
+    }
+  } catch (e) {
+    console.warn("Signal generation failed:", e);
   }
 }
 

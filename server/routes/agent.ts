@@ -95,16 +95,36 @@ router.post("/runs", async (req: AuthRequest, res) => {
 
     const wid = req.user!.workspaceId;
 
+    // If no jobId given, auto-pick the newest job with a contact found, or any newest job
+    let resolvedJobId = data.jobId;
+    if (!resolvedJobId) {
+      const candidate = await db.query.jobs.findFirst({
+        where: and(eq(jobs.workspaceId, wid), eq(jobs.contactFound, true)),
+        orderBy: [desc(jobs.discoveredAt)],
+      });
+      if (!candidate) {
+        const fallback = await db.query.jobs.findFirst({
+          where: eq(jobs.workspaceId, wid),
+          orderBy: [desc(jobs.discoveredAt)],
+        });
+        resolvedJobId = fallback?.id;
+      } else {
+        resolvedJobId = candidate.id;
+      }
+    }
+
+    const runData = { ...data, jobId: resolvedJobId };
+
     // Create initial run record
     const [run] = await db.insert(agentRuns).values({
       workspaceId: wid,
-      ...data,
+      ...runData,
       status: "pending",
       steps: [],
     }).returning();
 
     // Start async processing (non-blocking)
-    runAgentAsync(run.id, wid, data).catch(console.error);
+    runAgentAsync(run.id, wid, runData).catch(console.error);
 
     res.status(201).json(run);
   } catch (err: any) {

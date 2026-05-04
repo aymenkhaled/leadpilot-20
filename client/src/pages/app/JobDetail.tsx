@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
-import { getPlatformColor, getStatusColor, formatBudget, formatDate, formatRelativeTime, cn } from "@/lib/utils";
+import { getPlatformColor, getStatusColor, formatBudget, formatDate, formatRelativeTime, cn, stripHtml } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ArrowLeft, ExternalLink, Zap, Bot, Mail, MapPin, Globe, Clock, DollarSign,
@@ -300,7 +300,7 @@ export default function JobDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto pr-1">
-                {job?.description || "No description available."}
+                {job?.description ? stripHtml(job.description) : "No description available."}
               </div>
             </CardContent>
           </Card>
