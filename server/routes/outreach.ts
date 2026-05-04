@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { db } from "../db.js";
 import { outreach, contacts, jobs, workspaceSettings, workspaceApiKeys } from "@shared/schema";
-import { eq, and, desc, sql, ilike, or } from "drizzle-orm";
+import { eq, and, desc, sql, ilike, or, inArray } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../auth.js";
 import { decryptApiKey } from "../crypto.js";
 
@@ -41,11 +41,11 @@ router.get("/", async (req: AuthRequest, res) => {
     const [contactRows, jobRows] = await Promise.all([
       contactIds.length > 0
         ? db.select({ id: contacts.id, fullName: contacts.fullName, firstName: contacts.firstName, lastName: contacts.lastName })
-            .from(contacts).where(sql`id = ANY(${contactIds})`)
+            .from(contacts).where(inArray(contacts.id, contactIds))
         : Promise.resolve([]),
       jobIds.length > 0
         ? db.select({ id: jobs.id, title: jobs.title, companyName: jobs.companyName })
-            .from(jobs).where(sql`id = ANY(${jobIds})`)
+            .from(jobs).where(inArray(jobs.id, jobIds))
         : Promise.resolve([]),
     ]);
     const contactMap = Object.fromEntries(contactRows.map(c => [c.id, c]));

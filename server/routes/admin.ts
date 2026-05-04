@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db.js";
 import { users, workspaces, usageLog, jobs, contacts, agentRuns, outreach, workspaceMembers } from "@shared/schema";
-import { eq, desc, sql, count, ne } from "drizzle-orm";
+import { eq, desc, sql, count, ne, inArray } from "drizzle-orm";
 import { requireAdmin, type AuthRequest } from "../auth.js";
 
 const router = Router();
@@ -24,15 +24,15 @@ router.get("/workspaces", async (_req, res) => {
     const [jobCounts, contactCounts, userCounts] = await Promise.all([
       wsIds.length > 0
         ? db.select({ workspaceId: jobs.workspaceId, count: sql<number>`count(*)` })
-            .from(jobs).where(sql`workspace_id = ANY(${wsIds})`).groupBy(jobs.workspaceId)
+            .from(jobs).where(inArray(jobs.workspaceId, wsIds)).groupBy(jobs.workspaceId)
         : Promise.resolve([]),
       wsIds.length > 0
         ? db.select({ workspaceId: contacts.workspaceId, count: sql<number>`count(*)` })
-            .from(contacts).where(sql`workspace_id = ANY(${wsIds})`).groupBy(contacts.workspaceId)
+            .from(contacts).where(inArray(contacts.workspaceId, wsIds)).groupBy(contacts.workspaceId)
         : Promise.resolve([]),
       wsIds.length > 0
         ? db.select({ workspaceId: workspaceMembers.workspaceId, count: sql<number>`count(*)` })
-            .from(workspaceMembers).where(sql`workspace_id = ANY(${wsIds})`).groupBy(workspaceMembers.workspaceId)
+            .from(workspaceMembers).where(inArray(workspaceMembers.workspaceId, wsIds)).groupBy(workspaceMembers.workspaceId)
         : Promise.resolve([]),
     ]);
 
@@ -68,7 +68,7 @@ router.get("/users", async (_req, res) => {
     const wsIds = [...new Set(allUsers.map(u => u.workspaceId).filter(Boolean))] as string[];
     const wsRows = wsIds.length > 0
       ? await db.select({ id: workspaces.id, name: workspaces.name, plan: workspaces.plan })
-          .from(workspaces).where(sql`id = ANY(${wsIds})`)
+          .from(workspaces).where(inArray(workspaces.id, wsIds))
       : [];
     const wsMap = Object.fromEntries(wsRows.map(w => [w.id, w]));
 

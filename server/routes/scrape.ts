@@ -67,7 +67,7 @@ router.get("/runs", async (req: AuthRequest, res) => {
     const limit = Math.min(Number(req.query.limit) || 20, 100);
     const runs = await db.select().from(scrapeRuns)
       .where(eq(scrapeRuns.workspaceId, req.user!.workspaceId))
-      .orderBy(desc(scrapeRuns.createdAt))
+      .orderBy(desc(scrapeRuns.startedAt))
       .limit(limit);
     res.json({ runs });
   } catch (err: any) {
